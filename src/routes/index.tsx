@@ -380,93 +380,81 @@ function SignalSkeletons() {
 const PERIODS = ["Last 7 days", "Last 30 days", "Last 90 days", "Quarter to date"];
 const CATEGORIES = ["All", "Financial", "Capacity", "Throughput", "Quality"] as const;
 
-const DataTable = (() => {
-  function Inner(_props: object, ref: React.Ref<HTMLDivElement>) {
-    const [period, setPeriod] = useState(PERIODS[1]);
-    const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("All");
+const DataTable = forwardRef<HTMLDivElement>(function DataTable(_, ref) {
+  const [period, setPeriod] = useState(PERIODS[1]);
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("All");
 
-    const filtered = KPI_CATALOG.filter(
-      (k) => category === "All" || k.category === category,
-    );
+  const filtered = KPI_CATALOG.filter(
+    (k) => category === "All" || k.category === category,
+  );
 
-    return (
-      <div ref={ref} className="mt-8 rounded-2xl border border-border bg-card p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">All metrics</h2>
-            <p className="text-xs text-muted-foreground">
-              Full operational data for power users.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <select
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              className="h-9 rounded-md border border-border bg-card px-2.5 text-xs text-foreground"
-            >
-              {PERIODS.map((p) => (
-                <option key={p}>{p}</option>
-              ))}
-            </select>
-            <select
-              value={category}
-              onChange={(e) =>
-                setCategory(e.target.value as (typeof CATEGORIES)[number])
-              }
-              className="h-9 rounded-md border border-border bg-card px-2.5 text-xs text-foreground"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </div>
+  return (
+    <div ref={ref} className="mt-8 rounded-2xl border border-border bg-card p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">All metrics</h2>
+          <p className="text-xs text-muted-foreground">
+            Full operational data for power users.
+          </p>
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="py-2 pr-4 font-medium">Metric</th>
-                <th className="py-2 pr-4 font-medium">Category</th>
-                <th className="py-2 pr-4 font-medium">Current</th>
-                <th className="py-2 pr-4 font-medium">Target</th>
-                <th className="py-2 pr-4 font-medium">Deviation</th>
-                <th className="py-2 pr-4 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((k) => {
-                const dev = signedDeviationPct(k);
-                return (
-                  <tr key={k.slug} className="border-b border-border/60 last:border-0">
-                    <td className="py-3 pr-4 font-medium text-foreground">{k.label}</td>
-                    <td className="py-3 pr-4 text-muted-foreground">{k.category}</td>
-                    <td className="py-3 pr-4 text-foreground">{formatValue(k)}</td>
-                    <td className="py-3 pr-4 text-muted-foreground">{formatTarget(k)}</td>
-                    <td className="py-3 pr-4 text-foreground">
-                      {dev > 0 ? "+" : ""}
-                      {dev.toFixed(1)}%
-                    </td>
-                    <td className="py-3 pr-4">
-                      <StatusDot status={statusFor(k)} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="flex flex-wrap gap-2">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="h-9 rounded-md border border-border bg-card px-2.5 text-xs text-foreground"
+          >
+            {PERIODS.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </select>
+          <select
+            value={category}
+            onChange={(e) =>
+              setCategory(e.target.value as (typeof CATEGORIES)[number])
+            }
+            className="h-9 rounded-md border border-border bg-card px-2.5 text-xs text-foreground"
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
         </div>
       </div>
-    );
-  }
-  // eslint-disable-next-line react/display-name
-  return Object.assign(
-    // forwardRef wrapper
-    (function () {
-      const Forwarded = (require("react") as typeof import("react")).forwardRef<
-        HTMLDivElement
-      >(Inner);
-      return Forwarded;
-    })(),
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <th className="py-2 pr-4 font-medium">Metric</th>
+              <th className="py-2 pr-4 font-medium">Category</th>
+              <th className="py-2 pr-4 font-medium">Current</th>
+              <th className="py-2 pr-4 font-medium">Target</th>
+              <th className="py-2 pr-4 font-medium">Deviation</th>
+              <th className="py-2 pr-4 font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((k) => {
+              const dev = signedDeviationPct(k);
+              return (
+                <tr key={k.slug} className="border-b border-border/60 last:border-0">
+                  <td className="py-3 pr-4 font-medium text-foreground">{k.label}</td>
+                  <td className="py-3 pr-4 text-muted-foreground">{k.category}</td>
+                  <td className="py-3 pr-4 text-foreground">{formatValue(k)}</td>
+                  <td className="py-3 pr-4 text-muted-foreground">{formatTarget(k)}</td>
+                  <td className="py-3 pr-4 text-foreground">
+                    {dev > 0 ? "+" : ""}
+                    {dev.toFixed(1)}%
+                  </td>
+                  <td className="py-3 pr-4">
+                    <StatusDot status={statusFor(k)} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
-})();
+});
