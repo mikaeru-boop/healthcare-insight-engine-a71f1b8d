@@ -7,9 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { KPI_CATALOG, isOffTarget, type Kpi } from "@/lib/kpi-catalog";
+
+type SearchParams = { focus?: string };
 
 export const Route = createFileRoute("/recommendations")({
   component: Index,
+  validateSearch: (search: Record<string, unknown>): SearchParams => {
+    const focus = typeof search.focus === "string" ? search.focus : undefined;
+    return focus ? { focus } : {};
+  },
   head: () => ({
     meta: [
       { title: "Recommendations — Healthcare Ops Advisor" },
@@ -21,6 +28,29 @@ export const Route = createFileRoute("/recommendations")({
     ],
   }),
 });
+
+function kpiToRow(k: Kpi): MetricRow {
+  return {
+    id: crypto.randomUUID(),
+    name: k.label,
+    current: String(k.current),
+    target: String(k.target),
+    unit: k.unit,
+  };
+}
+
+function rowsFromFocus(focus: string | undefined): MetricRow[] | null {
+  if (!focus) return null;
+  if (focus === "off-target") {
+    const off = KPI_CATALOG.filter(isOffTarget);
+    if (off.length === 0) return null;
+    const rows = off.map(kpiToRow);
+    return rows.length === 1 ? [...rows, newRow()] : rows;
+  }
+  const match = KPI_CATALOG.find((k) => k.slug === focus);
+  if (!match) return null;
+  return [kpiToRow(match), newRow()];
+}
 
 type MetricRow = {
   id: string;
@@ -46,8 +76,11 @@ const SAMPLE: MetricRow[] = [
 ];
 
 function Index() {
+  const { focus } = Route.useSearch();
   const [timePeriod, setTimePeriod] = useState("Q3 2026");
-  const [metrics, setMetrics] = useState<MetricRow[]>([newRow(), newRow()]);
+  const [metrics, setMetrics] = useState<MetricRow[]>(
+    () => rowsFromFocus(focus) ?? [newRow(), newRow()],
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
