@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 
@@ -63,50 +64,58 @@
 
 :root {
   --radius: 1rem;
-  /* Soft mint canvas matching the reference dashboard */
-  --background: oklch(0.965 0.025 165);
-  --foreground: oklch(0.18 0.02 160);
+
+  /* Brand palette
+   * Deep green   #145338  → oklch(0.36 0.07 158)
+   * Near-black   #000402  → oklch(0.07 0.005 160)
+   * Cool gray    #97A09B  → oklch(0.66 0.008 158)
+   * Dark gray    #6A6E6C  → oklch(0.49 0.005 158)
+   */
+
+  /* Soft off-white canvas (sits between the dark hero and white cards) */
+  --background: oklch(0.97 0.004 158);
+  --foreground: oklch(0.07 0.005 160);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 160);
+  --card-foreground: oklch(0.07 0.005 160);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 160);
+  --popover-foreground: oklch(0.07 0.005 160);
 
-  /* Deep emerald primary (dark green sidebar/CTA color) */
-  --primary: oklch(0.32 0.06 165);
-  --primary-foreground: oklch(0.985 0.01 160);
+  /* Primary = deep brand green #145338 */
+  --primary: oklch(0.36 0.07 158);
+  --primary-foreground: oklch(0.985 0.003 158);
 
-  --secondary: oklch(0.955 0.02 160);
-  --secondary-foreground: oklch(0.25 0.04 165);
+  --secondary: oklch(0.955 0.005 158);
+  --secondary-foreground: oklch(0.18 0.02 158);
 
-  --muted: oklch(0.955 0.015 160);
-  --muted-foreground: oklch(0.5 0.02 160);
+  --muted: oklch(0.955 0.004 158);
+  --muted-foreground: oklch(0.49 0.005 158);
 
-  /* Vibrant accent green (round logo / pill color) */
-  --accent: oklch(0.78 0.16 155);
-  --accent-foreground: oklch(0.18 0.04 160);
+  /* Accent = brand mid-green tint, used for the round logo pill */
+  --accent: oklch(0.62 0.11 158);
+  --accent-foreground: oklch(0.985 0.003 158);
 
-  --destructive: oklch(0.62 0.2 25);
-  --destructive-foreground: oklch(0.985 0.01 160);
+  --destructive: oklch(0.6 0.2 25);
+  --destructive-foreground: oklch(0.985 0.003 158);
 
-  --border: oklch(0.92 0.015 160);
-  --input: oklch(0.94 0.012 160);
-  --ring: oklch(0.78 0.16 155);
+  --border: oklch(0.92 0.004 158);
+  --input: oklch(0.94 0.004 158);
+  --ring: oklch(0.36 0.07 158);
 
-  --chart-1: oklch(0.78 0.16 155);
-  --chart-2: oklch(0.32 0.06 165);
-  --chart-3: oklch(0.7 0.14 195);
-  --chart-4: oklch(0.82 0.14 85);
-  --chart-5: oklch(0.65 0.18 25);
+  --chart-1: oklch(0.36 0.07 158);
+  --chart-2: oklch(0.62 0.11 158);
+  --chart-3: oklch(0.66 0.008 158);
+  --chart-4: oklch(0.49 0.005 158);
+  --chart-5: oklch(0.07 0.005 160);
 
   --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.25 0.03 160);
-  --sidebar-primary: oklch(0.32 0.06 165);
-  --sidebar-primary-foreground: oklch(0.985 0.01 160);
-  --sidebar-accent: oklch(0.955 0.02 160);
-  --sidebar-accent-foreground: oklch(0.25 0.04 165);
-  --sidebar-border: oklch(0.92 0.015 160);
-  --sidebar-ring: oklch(0.78 0.16 155);
+  --sidebar-foreground: oklch(0.18 0.01 158);
+  --sidebar-primary: oklch(0.36 0.07 158);
+  --sidebar-primary-foreground: oklch(0.985 0.003 158);
+  --sidebar-accent: oklch(0.955 0.005 158);
+  --sidebar-accent-foreground: oklch(0.18 0.02 158);
+  --sidebar-border: oklch(0.92 0.004 158);
+  --sidebar-ring: oklch(0.36 0.07 158);
 }
 
 .dark {
@@ -149,8 +158,32 @@
     border-color: var(--color-border);
   }
 
+  html {
+    font-family:
+      "DM Sans",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    letter-spacing: -0.005em;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.02em;
   }
 }
