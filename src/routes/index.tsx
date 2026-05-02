@@ -365,7 +365,7 @@ function AiPanel({
     : null;
 
   return (
-    <aside className="rounded-2xl border border-primary/15 bg-sidebar-accent p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <aside className="dark rounded-2xl border border-border bg-[oklch(0.18_0.03_270)] p-5 text-foreground shadow-[0_8px_24px_-8px_rgba(16,24,40,0.25)]">
       <div className="mb-1 flex items-center gap-2 text-primary">
         <Sparkles className="h-4 w-4" />
         <h2 className="text-base font-semibold text-foreground">Where to focus today</h2>
@@ -375,7 +375,7 @@ function AiPanel({
       </p>
 
       {error ? (
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-card/40 p-4">
           <div className="flex items-start gap-2">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
             <p className="text-sm leading-relaxed text-foreground">
@@ -387,7 +387,7 @@ function AiPanel({
       ) : signals === null ? (
         <SignalSkeletons />
       ) : signals.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-4 text-sm leading-relaxed text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card/40 p-4 text-sm leading-relaxed text-muted-foreground">
           No signals flagged today. All tracked metrics are within 10% of target. Check back
           after the next data refresh or review the full metric table below.
         </div>
@@ -399,23 +399,23 @@ function AiPanel({
               <li key={s.priority}>
                 <button
                   onClick={() => onSelectSignal(s.metricSlug)}
-                  className={`w-full rounded-xl border bg-card p-4 text-left transition-all ${
+                  className={`w-full rounded-xl border bg-card/40 p-4 text-left transition-all ${
                     active
-                      ? "border-primary/40 shadow-[0_2px_6px_rgba(91,73,232,0.12)]"
-                      : "border-border hover:border-primary/30"
+                      ? "border-primary/60 bg-card/60 shadow-[0_2px_6px_rgba(91,73,232,0.25)]"
+                      : "border-border hover:border-primary/40"
                   }`}
                 >
-                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                  <span className="inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                     Priority {s.priority}
                   </span>
                   <p className="mt-2 text-sm font-medium leading-snug text-foreground">
                     {s.signal}
                   </p>
                   <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                    <span className="font-medium text-foreground/70">Impact:</span> {s.impact}
+                    <span className="font-medium text-foreground/80">Impact:</span> {s.impact}
                   </p>
                   <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                    <span className="font-medium text-foreground/70">Next action:</span> {s.nextAction}
+                    <span className="font-medium text-foreground/80">Next action:</span> {s.nextAction}
                   </p>
                 </button>
               </li>
