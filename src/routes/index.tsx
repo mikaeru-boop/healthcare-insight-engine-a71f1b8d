@@ -45,14 +45,14 @@ function Overview() {
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         {/* ---------- Health banner ---------- */}
         <div
-          className={`mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${banner.wrap}`}
+          className={`mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-5 ${banner.wrap}`}
         >
           <div className="flex items-center gap-3">
-            <div className={`rounded-lg p-2 ${banner.iconWrap}`}>
+            <div className={`rounded-full p-2.5 ${banner.iconWrap}`}>
               <banner.Icon className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 Q3 2026 · Ops Health
               </p>
               <p className="text-base font-semibold leading-tight text-foreground">
