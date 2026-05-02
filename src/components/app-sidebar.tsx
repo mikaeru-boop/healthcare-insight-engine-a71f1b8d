@@ -14,85 +14,78 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-
 const primary = [
   { title: "Overview", url: "/", icon: LayoutDashboard },
   { title: "Recommendations", url: "/recommendations", icon: Sparkles },
-  { title: "Transactions", url: "/", icon: ArrowLeftRight },
-  { title: "Schedule", url: "/", icon: Calendar },
-  { title: "Insights", url: "/", icon: Search },
-  { title: "Reports", url: "/", icon: PieChart },
-  { title: "Trends", url: "/", icon: TrendingUp },
+  { title: "Transactions", url: "#", icon: ArrowLeftRight },
+  { title: "Schedule", url: "#", icon: Calendar },
+  { title: "Insights", url: "#", icon: Search },
+  { title: "Reports", url: "#", icon: PieChart },
+  { title: "Trends", url: "#", icon: TrendingUp },
 ];
 
 const utility = [
-  { title: "Refresh", url: "/", icon: RotateCcw },
-  { title: "Settings", url: "/", icon: Settings },
-  { title: "Help", url: "/", icon: HelpCircle },
-  { title: "Alerts", url: "/", icon: Bell },
-  { title: "Profile", url: "/", icon: User },
+  { title: "Refresh", icon: RotateCcw },
+  { title: "Settings", icon: Settings },
+  { title: "Help", icon: HelpCircle },
+  { title: "Alerts", icon: Bell },
+  { title: "Profile", icon: User },
 ];
 
 export function AppSidebar() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
-  const isActive = (path: string) => currentPath === path;
 
   return (
-    <Sidebar collapsible="none" className="w-16 border-r border-sidebar-border">
-      <SidebarHeader className="items-center py-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+    <aside className="sticky top-0 flex h-screen w-16 shrink-0 flex-col items-center justify-between border-r border-border bg-card py-4">
+      {/* Logo */}
+      <div className="flex flex-col items-center gap-1">
+        <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
           <Sparkles className="h-4 w-4" />
         </div>
-      </SidebarHeader>
+        {primary.map((item) => {
+          const active = item.url !== "#" && currentPath === item.url;
+          const Icon = item.icon;
+          const Btn = (
+            <span
+              className={`group flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+                active
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+              title={item.title}
+              aria-label={item.title}
+            >
+              <Icon className="h-[18px] w-[18px]" />
+            </span>
+          );
+          return item.url === "#" ? (
+            <button key={item.title} type="button">
+              {Btn}
+            </button>
+          ) : (
+            <Link key={item.title} to={item.url}>
+              {Btn}
+            </Link>
+          );
+        })}
+      </div>
 
-      <SidebarContent className="items-center">
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu className="items-center gap-1">
-              {primary.map((item) => (
-                <SidebarMenuItem key={item.title + item.icon.displayName}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    tooltip={item.title}
-                    className="h-10 w-10 justify-center p-0 data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground"
-                  >
-                    <Link to={item.url}>
-                      <item.icon className="h-[18px] w-[18px]" />
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="items-center pb-4">
-        <SidebarMenu className="items-center gap-1">
-          {utility.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                tooltip={item.title}
-                className="h-10 w-10 justify-center p-0 text-muted-foreground"
-              >
-                <item.icon className="h-[18px] w-[18px]" />
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarFooter>
-    </Sidebar>
+      <div className="flex flex-col items-center gap-1">
+        {utility.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.title}
+              type="button"
+              title={item.title}
+              aria-label={item.title}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Icon className="h-[18px] w-[18px]" />
+            </button>
+          );
+        })}
+      </div>
+    </aside>
   );
 }
