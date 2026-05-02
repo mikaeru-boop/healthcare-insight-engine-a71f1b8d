@@ -67,19 +67,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex h-14 items-center gap-3 px-4">
-            <SidebarTrigger />
-            <span className="text-sm font-medium text-muted-foreground">Healthcare Ops Advisor</span>
-          </header>
-          <main className="flex-1">
-            <Outlet />
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
+    <div className="flex min-h-screen w-full bg-background">
+      <AppSidebar />
+      <main className="min-w-0 flex-1">
+        <Outlet />
+      </main>
+    </div>
   );
 }
