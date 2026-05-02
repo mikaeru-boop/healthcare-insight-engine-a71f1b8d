@@ -119,24 +119,15 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto max-w-5xl px-6 py-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-                Healthcare Ops Advisor
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                KPI-driven recommendations for cost, utilization, and throughput.
-              </p>
-            </div>
-          </div>
+      <div className="mx-auto max-w-5xl px-6 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Recommendations
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            KPI-driven recommendations for cost, utilization, and throughput.
+          </p>
         </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
