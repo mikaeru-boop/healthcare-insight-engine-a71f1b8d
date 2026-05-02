@@ -221,7 +221,7 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
 
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <ComposedChart data={trend} margin={{ top: 8, right: 56, left: 0, bottom: 0 }}>
             <XAxis
               dataKey="day"
               tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
@@ -232,8 +232,10 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
               tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
               tickLine={false}
               axisLine={false}
-              width={48}
-              domain={["auto", "auto"]}
+              width={56}
+              domain={yDomain}
+              ticks={yTicks}
+              tickFormatter={(v: number) => formatValue(kpi, v)}
             />
             <Tooltip
               contentStyle={{
@@ -243,7 +245,35 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
                 fontSize: 12,
               }}
               labelFormatter={(d) => `Day ${d}`}
-              formatter={(v: number) => [formatValue(kpi, v), kpi.label]}
+              formatter={(v: number | number[]) => {
+                const n = Array.isArray(v) ? v[1] - v[0] : v;
+                return [formatValue(kpi, n as number), kpi.label];
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey={(d: { value: number }) =>
+                kpi.better === "higher"
+                  ? [Math.min(d.value, kpi.target), kpi.target]
+                  : [kpi.target, Math.max(d.value, kpi.target)]
+              }
+              stroke="none"
+              fill="oklch(0.72 0.18 25)"
+              fillOpacity={0.18}
+              isAnimationActive={false}
+              activeDot={false}
+            />
+            <ReferenceLine
+              y={kpi.target}
+              stroke="var(--color-muted-foreground)"
+              strokeDasharray="4 4"
+              strokeOpacity={0.7}
+              label={{
+                value: "Target",
+                position: "right",
+                fill: "var(--color-muted-foreground)",
+                fontSize: 11,
+              }}
             />
             <Line
               type="monotone"
@@ -251,8 +281,9 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
               stroke="var(--color-foreground)"
               strokeWidth={2}
               dot={false}
+              isAnimationActive={false}
             />
-          </LineChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
 
