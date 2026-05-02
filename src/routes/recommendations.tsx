@@ -263,7 +263,7 @@ function Index() {
             </CardContent>
           </Card>
         )}
-      </main>
+      </div>
     </div>
   )
 }
