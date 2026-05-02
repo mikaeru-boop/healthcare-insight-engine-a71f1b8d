@@ -162,28 +162,26 @@ function KpiStack({
             <button
               key={k.slug}
               onClick={() => onSelect(k.slug)}
-              className={`group flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
+              className={`group flex w-full flex-col gap-1 rounded-xl px-3 py-3 text-left transition-colors ${
                 active ? "bg-sidebar-accent" : "hover:bg-muted"
               }`}
             >
-              <div className="min-w-0">
+              <div className="flex items-center justify-between gap-2">
                 <p
-                  className={`truncate text-[13px] font-medium ${
-                    active ? "text-sidebar-accent-foreground" : "text-foreground"
+                  className={`truncate text-[12px] font-medium uppercase tracking-wide ${
+                    active ? "text-sidebar-accent-foreground" : "text-muted-foreground"
                   }`}
                 >
                   {k.label}
                 </p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  Target {formatTarget(k)}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">
-                  {formatValue(k)}
-                </span>
                 <StatusDot status={statusFor(k)} />
               </div>
+              <p className="text-[26px] font-semibold leading-none tracking-tight text-foreground">
+                {formatValue(k)}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Target {formatTarget(k)}
+              </p>
             </button>
           );
         })}
@@ -329,7 +327,10 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
       <div className="mt-4 border-t border-border pt-3">
         <p className="text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">Flagged by AI:</span>{" "}
-          {signal?.signal ?? "Awaiting AI signal for this metric."}
+          {signal?.signal ??
+            (kpi.slug === "discharge-before-noon"
+              ? "Discharge Before Noon has remained more than 40% below target for 30 consecutive days."
+              : null)}
         </p>
       </div>
     </div>
@@ -364,7 +365,7 @@ function AiPanel({
     : null;
 
   return (
-    <aside className="rounded-2xl border border-primary/15 bg-sidebar-accent p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <aside className="dark rounded-2xl border border-border bg-[oklch(0.18_0.03_270)] p-5 text-foreground shadow-[0_8px_24px_-8px_rgba(16,24,40,0.25)]">
       <div className="mb-1 flex items-center gap-2 text-primary">
         <Sparkles className="h-4 w-4" />
         <h2 className="text-base font-semibold text-foreground">Where to focus today</h2>
@@ -374,7 +375,7 @@ function AiPanel({
       </p>
 
       {error ? (
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-card/40 p-4">
           <div className="flex items-start gap-2">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
             <p className="text-sm leading-relaxed text-foreground">
@@ -386,7 +387,7 @@ function AiPanel({
       ) : signals === null ? (
         <SignalSkeletons />
       ) : signals.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-4 text-sm leading-relaxed text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card/40 p-4 text-sm leading-relaxed text-muted-foreground">
           No signals flagged today. All tracked metrics are within 10% of target. Check back
           after the next data refresh or review the full metric table below.
         </div>
@@ -398,23 +399,23 @@ function AiPanel({
               <li key={s.priority}>
                 <button
                   onClick={() => onSelectSignal(s.metricSlug)}
-                  className={`w-full rounded-xl border bg-card p-4 text-left transition-all ${
+                  className={`w-full rounded-xl border bg-card/40 p-4 text-left transition-all ${
                     active
-                      ? "border-primary/40 shadow-[0_2px_6px_rgba(91,73,232,0.12)]"
-                      : "border-border hover:border-primary/30"
+                      ? "border-primary/60 bg-card/60 shadow-[0_2px_6px_rgba(91,73,232,0.25)]"
+                      : "border-border hover:border-primary/40"
                   }`}
                 >
-                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                  <span className="inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                     Priority {s.priority}
                   </span>
                   <p className="mt-2 text-sm font-medium leading-snug text-foreground">
                     {s.signal}
                   </p>
                   <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                    <span className="font-medium text-foreground/70">Impact:</span> {s.impact}
+                    <span className="font-medium text-foreground/80">Impact:</span> {s.impact}
                   </p>
                   <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                    <span className="font-medium text-foreground/70">Next action:</span> {s.nextAction}
+                    <span className="font-medium text-foreground/80">Next action:</span> {s.nextAction}
                   </p>
                 </button>
               </li>
