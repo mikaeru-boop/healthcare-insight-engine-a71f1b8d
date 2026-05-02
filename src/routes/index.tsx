@@ -462,7 +462,7 @@ const DataTable = forwardRef<HTMLDivElement>(function DataTable(_, ref) {
   );
 
   return (
-    <div ref={ref} className="mt-8 rounded-2xl border border-border bg-card p-5">
+    <div ref={ref} className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-foreground">All metrics</h2>
