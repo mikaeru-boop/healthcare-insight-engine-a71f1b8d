@@ -1,4 +1,12 @@
-import { Activity, DollarSign, Gauge, TrendingUp, type LucideIcon } from "lucide-react";
+import {
+  Activity,
+  BedDouble,
+  Clock,
+  DollarSign,
+  Gauge,
+  RotateCcw,
+  type LucideIcon,
+} from "lucide-react";
 
 export type Kpi = {
   slug: string;
@@ -9,80 +17,92 @@ export type Kpi = {
   /** "higher" → bigger is better. "lower" → smaller is better. */
   better: "higher" | "lower";
   icon: LucideIcon;
-  /** Approx $ exposure per quarter when off target. Used for the health banner only. */
-  quarterlyDollarImpact?: number;
+  category: "Financial" | "Capacity" | "Throughput" | "Quality";
 };
 
 export const KPI_CATALOG: Kpi[] = [
   {
-    slug: "or-utilization",
-    label: "OR Utilization",
-    current: 68,
-    target: 82,
-    unit: "%",
-    better: "higher",
-    icon: Gauge,
-    quarterlyDollarImpact: 900_000,
+    slug: "cost-per-case",
+    label: "Cost per Case",
+    current: 14760,
+    target: 12000,
+    unit: "USD",
+    better: "lower",
+    icon: DollarSign,
+    category: "Financial",
   },
   {
-    slug: "avg-length-of-stay",
-    label: "Avg Length of Stay",
-    current: 5.4,
+    slug: "bed-utilization",
+    label: "Bed Utilization",
+    current: 78,
+    target: 85,
+    unit: "%",
+    better: "higher",
+    icon: BedDouble,
+    category: "Capacity",
+  },
+  {
+    slug: "or-throughput",
+    label: "OR Throughput",
+    current: 4.1,
+    target: 5.0,
+    unit: "cases/day",
+    better: "higher",
+    icon: Gauge,
+    category: "Throughput",
+  },
+  {
+    slug: "length-of-stay",
+    label: "Length of Stay",
+    current: 4.6,
     target: 4.2,
     unit: "days",
     better: "lower",
     icon: Activity,
-    quarterlyDollarImpact: 450_000,
+    category: "Quality",
   },
   {
-    slug: "cost-per-discharge",
-    label: "Cost per Discharge",
-    current: 12450,
-    target: 10800,
-    unit: "USD",
+    slug: "readmission-rate",
+    label: "Readmission Rate",
+    current: 11.2,
+    target: 9.5,
+    unit: "%",
     better: "lower",
-    icon: DollarSign,
-    quarterlyDollarImpact: 1_650_000,
+    icon: RotateCcw,
+    category: "Quality",
   },
   {
-    slug: "ed-throughput",
-    label: "ED Throughput",
-    current: 2.1,
-    target: 3.0,
-    unit: "pts/hr",
+    slug: "discharge-before-noon",
+    label: "Discharge Before Noon",
+    current: 31,
+    target: 55,
+    unit: "%",
     better: "higher",
-    icon: TrendingUp,
-    quarterlyDollarImpact: 320_000,
+    icon: Clock,
+    category: "Throughput",
   },
 ];
 
-/** % progress toward target (0–100, clamped). 100 = on target or better. */
-export function gapPct(k: Kpi): number {
-  const pct =
-    k.better === "higher" ? (k.current / k.target) * 100 : (k.target / k.current) * 100;
-  return Math.max(0, Math.min(100, Math.round(pct)));
+/** Absolute % deviation from target. */
+export function deviationPct(k: Kpi): number {
+  if (k.target === 0) return 0;
+  return Math.abs((k.current - k.target) / k.target) * 100;
 }
 
-export type Health = "healthy" | "watch" | "needs-attention";
-
-export function aggregateHealth(kpis: Kpi[]): {
-  status: Health;
-  offTarget: Kpi[];
-  onTarget: Kpi[];
-  exposureUsd: number;
-} {
-  const offTarget = kpis.filter((k) => gapPct(k) < 95);
-  const onTarget = kpis.filter((k) => gapPct(k) >= 95);
-  const exposureUsd = offTarget.reduce((sum, k) => sum + (k.quarterlyDollarImpact ?? 0), 0);
-  let status: Health = "healthy";
-  if (offTarget.some((k) => gapPct(k) < 80)) status = "needs-attention";
-  else if (offTarget.length > 0) status = "watch";
-  return { status, offTarget, onTarget, exposureUsd };
+/** Signed % deviation: positive = above target, negative = below. */
+export function signedDeviationPct(k: Kpi): number {
+  if (k.target === 0) return 0;
+  return ((k.current - k.target) / k.target) * 100;
 }
 
-/** Sorts worst → best by gap. */
-export function rankByGap(kpis: Kpi[]): Kpi[] {
-  return [...kpis].sort((a, b) => gapPct(a) - gapPct(b));
+export type Status = "green" | "yellow" | "red";
+
+/** Status by deviation from target, regardless of direction. */
+export function statusFor(k: Kpi): Status {
+  const d = deviationPct(k);
+  if (d <= 10) return "green";
+  if (d <= 20) return "yellow";
+  return "red";
 }
 
 function formatNumber(n: number): string {
@@ -91,58 +111,33 @@ function formatNumber(n: number): string {
   return n.toFixed(1);
 }
 
-/** Signed delta from target, formatted with units. e.g. "−14 %", "+$1,650". */
-export function formatDelta(k: Kpi): string {
-  const raw = k.current - k.target;
-  // For "lower is better", positive raw means we are OVER target → bad.
-  // For "higher is better", negative raw means we are UNDER target → bad.
-  const sign = raw > 0 ? "+" : raw < 0 ? "−" : "";
-  const abs = Math.abs(raw);
-  if (k.unit === "USD") return `${sign}$${formatNumber(abs)}`;
-  if (k.unit === "%") return `${sign}${formatNumber(abs)} pts`;
-  return `${sign}${formatNumber(abs)} ${k.unit}`;
-}
-
-export function formatValue(k: Kpi): string {
-  if (k.unit === "USD") return `$${formatNumber(k.current)}`;
-  if (k.unit === "%") return `${formatNumber(k.current)}%`;
-  return `${formatNumber(k.current)} ${k.unit}`;
+export function formatValue(k: Kpi, value: number = k.current): string {
+  if (k.unit === "USD") return `$${formatNumber(value)}`;
+  if (k.unit === "%") return `${formatNumber(value)}%`;
+  return `${formatNumber(value)} ${k.unit}`;
 }
 
 export function formatTarget(k: Kpi): string {
-  if (k.unit === "USD") return `$${formatNumber(k.target)}`;
-  if (k.unit === "%") return `${formatNumber(k.target)}%`;
-  return `${formatNumber(k.target)} ${k.unit}`;
+  return formatValue(k, k.target);
 }
 
-export function formatExposure(usd: number): string {
-  if (usd >= 1_000_000) return `$${(usd / 1_000_000).toFixed(1)}M`;
-  if (usd >= 1_000) return `$${Math.round(usd / 1000)}K`;
-  return `$${usd}`;
-}
-
-export function isOffTarget(k: Kpi): boolean {
-  return gapPct(k) < 95;
-}
-
-/** Plain-English headline for the hero card. */
-export function headlineFor(k: Kpi): string {
-  const delta = Math.abs(k.current - k.target);
-  if (k.unit === "USD") {
-    const dir = k.current > k.target ? "over" : "under";
-    return `${k.label} is $${formatNumber(delta)} ${dir} target`;
+/** Generate a deterministic 30-day trend ending at current. */
+export function trendFor(k: Kpi): { day: number; value: number }[] {
+  const days = 30;
+  const start = k.current * (k.better === "higher" ? 0.85 : 1.18);
+  // simple seeded noise
+  let seed = k.slug.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const rand = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+  const out: { day: number; value: number }[] = [];
+  for (let i = 0; i < days; i++) {
+    const t = i / (days - 1);
+    const base = start + (k.current - start) * t;
+    const noise = (rand() - 0.5) * (k.current * 0.04);
+    out.push({ day: i + 1, value: +(base + noise).toFixed(2) });
   }
-  if (k.unit === "%") {
-    const dir = k.better === "higher" ? "below" : "above";
-    return `${k.label} is ${formatNumber(delta)} pts ${dir} target`;
-  }
-  const dir =
-    k.better === "higher"
-      ? k.current < k.target
-        ? "below"
-        : "above"
-      : k.current > k.target
-        ? "above"
-        : "below";
-  return `${k.label} is ${formatNumber(delta)} ${k.unit} ${dir} target`;
+  out[out.length - 1].value = k.current;
+  return out;
 }

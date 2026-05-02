@@ -1,297 +1,460 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, Sparkles, AlertTriangle, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { createFileRoute } from "@tanstack/react-router";
+import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { Sparkles, AlertCircle, ArrowDown } from "lucide-react";
 import {
   KPI_CATALOG,
-  aggregateHealth,
-  formatDelta,
-  formatExposure,
   formatTarget,
   formatValue,
-  gapPct,
-  headlineFor,
-  rankByGap,
+  signedDeviationPct,
+  statusFor,
+  trendFor,
   type Kpi,
+  type Status,
 } from "@/lib/kpi-catalog";
+import { getRecommendations } from "@/server/recommendations.functions";
+import type { Signal } from "@/server/recommendations.functions";
 
 export const Route = createFileRoute("/")({
-  component: Overview,
+  component: Dashboard,
   head: () => ({
     meta: [
-      { title: "Overview — Healthcare Ops Advisor" },
+      { title: "Operations Dashboard — Healthcare Ops Advisor" },
       {
         name: "description",
         content:
-          "High-signal operational overview: top priority KPI, what needs attention, and one-click AI action plans.",
+          "Healthcare operations dashboard surfacing the highest-signal KPIs and AI-prioritized actions.",
       },
     ],
   }),
 });
 
-function Overview() {
-  const health = aggregateHealth(KPI_CATALOG);
-  const ranked = rankByGap(KPI_CATALOG);
-  const hero = ranked[0]; // worst-performing
-  const needsAttention = rankByGap(health.offTarget);
-  const onTrack = health.onTarget;
+function Dashboard() {
+  const callRecs = useServerFn(getRecommendations);
+  const [signals, setSignals] = useState<Signal[] | null>(null);
+  const [recError, setRecError] = useState<string | null>(null);
+  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
+  const [activeSlug, setActiveSlug] = useState<string | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
 
-  const banner = healthBanner(health.status);
+  // Fire AI call on load.
+  useEffect(() => {
+    let cancelled = false;
+    const payload = {
+      kpis: KPI_CATALOG.map((k) => ({
+        slug: k.slug,
+        label: k.label,
+        current: k.current,
+        target: k.target,
+        unit: k.unit,
+        better: k.better,
+        deviationPct: Math.round(Math.abs(signedDeviationPct(k))),
+        status: statusFor(k),
+      })),
+    };
+    callRecs({ data: payload })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.error) {
+          setRecError(res.error);
+          return;
+        }
+        setSignals(res.signals);
+        setGeneratedAt(res.generatedAt);
+        if (res.signals[0]) setActiveSlug(res.signals[0].metricSlug);
+      })
+      .catch((e) => {
+        if (!cancelled) setRecError(e instanceof Error ? e.message : "Failed");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [callRecs]);
+
+  const activeKpi = useMemo<Kpi>(() => {
+    return (
+      KPI_CATALOG.find((k) => k.slug === activeSlug) ??
+      KPI_CATALOG.slice().sort(
+        (a, b) => Math.abs(signedDeviationPct(b)) - Math.abs(signedDeviationPct(a)),
+      )[0]
+    );
+  }, [activeSlug]);
+
+  const activeSignal = signals?.find((s) => s.metricSlug === activeKpi.slug);
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-        {/* ---------- Health banner ---------- */}
-        <div
-          className={`mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-5 ${banner.wrap}`}
-        >
-          <div className="flex items-center gap-3">
-            <div className={`rounded-full p-2.5 ${banner.iconWrap}`}>
-              <banner.Icon className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Q3 2026 · Ops Health
-              </p>
-              <p className="text-base font-semibold leading-tight text-foreground">
-                {banner.label}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
-            <Stat label="Off target" value={`${health.offTarget.length} of ${KPI_CATALOG.length}`} />
-            {health.exposureUsd > 0 && (
-              <Stat label="Est. exposure" value={`${formatExposure(health.exposureUsd)} / qtr`} />
-            )}
-          </div>
+      <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
+        <header className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Operations Dashboard
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            High-signal KPIs and AI-ranked priorities for today.
+          </p>
+        </header>
+
+        {/* 3-column grid: 20 / 50 / 30 */}
+        <div className="grid gap-5 lg:[grid-template-columns:20%_50%_30%]">
+          <KpiStack
+            activeSlug={activeKpi.slug}
+            onSelect={(slug) => setActiveSlug(slug)}
+          />
+          <MetricDetail kpi={activeKpi} signal={activeSignal} />
+          <AiPanel
+            signals={signals}
+            error={recError}
+            generatedAt={generatedAt}
+            activeSlug={activeKpi.slug}
+            onSelectSignal={(slug) => setActiveSlug(slug)}
+            onScrollToTable={() =>
+              tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          />
         </div>
 
-        {/* ---------- Hero priority ---------- */}
-        {hero && gapPct(hero) < 95 ? (
-          <HeroCard kpi={hero} />
-        ) : (
-          <AllClearCard />
-        )}
-
-        {/* ---------- Triage ---------- */}
-        <div className="mt-5 grid gap-4 lg:grid-cols-5">
-          <Card className="lg:col-span-3">
-            <CardContent className="p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  <h2 className="text-sm font-semibold text-foreground">
-                    Needs attention ({needsAttention.length})
-                  </h2>
-                </div>
-                {needsAttention.length > 0 && (
-                  <Button asChild size="sm" variant="outline">
-                    <Link to="/recommendations" search={{ focus: "off-target" }}>
-                      <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                      AI plan for all
-                    </Link>
-                  </Button>
-                )}
-              </div>
-              {needsAttention.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Nothing flagged. All KPIs are within 5% of target.
-                </p>
-              ) : (
-                <ul className="space-y-2">
-                  {needsAttention.map((k) => (
-                    <AttentionRow key={k.slug} kpi={k} isHero={k.slug === hero?.slug} />
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-2">
-            <CardContent className="p-5">
-              <div className="mb-4 flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                <h2 className="text-sm font-semibold text-foreground">
-                  On track ({onTrack.length})
-                </h2>
-              </div>
-              {onTrack.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No KPIs on target yet.</p>
-              ) : (
-                <ul className="space-y-1.5">
-                  {onTrack.map((k) => (
-                    <li
-                      key={k.slug}
-                      className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm text-muted-foreground"
-                    >
-                      <span className="flex items-center gap-2">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-foreground/60" />
-                        {k.label}
-                      </span>
-                      <span className="text-xs">{formatValue(k)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <DataTable ref={tableRef} />
       </div>
     </div>
   );
 }
 
-/* ---------- subcomponents ---------- */
+/* ---------- Left: KPI stack ---------- */
 
-function HeroCard({ kpi }: { kpi: Kpi }) {
-  const pct = gapPct(kpi);
-  const severity = pct < 80 ? "critical" : "warn";
-  const borderColor =
-    severity === "critical" ? "border-l-destructive" : "border-l-amber-500";
-
+function KpiStack({
+  activeSlug,
+  onSelect,
+}: {
+  activeSlug: string;
+  onSelect: (slug: string) => void;
+}) {
   return (
-    <Card className={`relative overflow-hidden border-l-4 ${borderColor}`}>
-      <CardContent className="p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="mb-2 flex items-center gap-2">
-              <Badge variant="destructive" className="uppercase tracking-wide">
-                Top priority
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                Largest gap to target
-              </span>
+    <div className="space-y-3">
+      {KPI_CATALOG.map((k) => {
+        const active = k.slug === activeSlug;
+        return (
+          <button
+            key={k.slug}
+            onClick={() => onSelect(k.slug)}
+            className={`w-full rounded-2xl border bg-card p-4 text-left transition-all hover:border-foreground/30 ${
+              active ? "border-foreground/40 shadow-sm" : "border-border"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-xs font-medium leading-tight text-muted-foreground">
+                {k.label}
+              </p>
+              <StatusDot status={statusFor(k)} />
             </div>
-            <h2 className="text-xl font-semibold leading-snug text-foreground sm:text-2xl">
-              {headlineFor(kpi)}
-            </h2>
-            <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm">
-              <span className="text-muted-foreground">
-                Actual{" "}
-                <span className="font-semibold text-foreground">{formatValue(kpi)}</span>
-              </span>
-              <span className="text-muted-foreground">
-                Target{" "}
-                <span className="font-semibold text-foreground">{formatTarget(kpi)}</span>
-              </span>
-              <span className="font-semibold text-destructive">{formatDelta(kpi)}</span>
-            </div>
-          </div>
-          <Button asChild size="lg">
-            <Link to="/recommendations" search={{ focus: kpi.slug }}>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Get action plan
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-        <div className="mt-5">
-          <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
-            <span>Progress to target</span>
-            <span>{pct}%</span>
-          </div>
-          <Progress value={pct} />
-        </div>
-      </CardContent>
-    </Card>
+            <p className="mt-2 text-2xl font-semibold leading-none text-foreground">
+              {formatValue(k)}
+            </p>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Target {formatTarget(k)}
+            </p>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
-function AllClearCard() {
+function StatusDot({ status }: { status: Status }) {
+  const color =
+    status === "green"
+      ? "bg-emerald-500"
+      : status === "yellow"
+        ? "bg-amber-500"
+        : "bg-red-500";
+  return <span className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${color}`} aria-label={status} />;
+}
+
+/* ---------- Center: metric detail ---------- */
+
+function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined }) {
+  const trend = useMemo(() => trendFor(kpi), [kpi]);
+  const dev = signedDeviationPct(kpi);
+  const devLabel = `${dev > 0 ? "+" : ""}${dev.toFixed(1)}%`;
+  const isBad =
+    (kpi.better === "higher" && dev < 0) || (kpi.better === "lower" && dev > 0);
+
   return (
-    <Card className="border-l-4 border-l-emerald-500">
-      <CardContent className="flex items-center justify-between gap-4 p-6">
-        <div className="flex items-center gap-3">
-          <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+    <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Signal 1 · Metric detail
+          </p>
+          <h2 className="mt-1 text-xl font-semibold text-foreground">{kpi.label}</h2>
+        </div>
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-1 text-right">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">All KPIs on target</h2>
-            <p className="text-sm text-muted-foreground">
-              Nothing critical to act on right now.
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Current</p>
+            <p className="text-lg font-semibold text-foreground">{formatValue(kpi)}</p>
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Target</p>
+            <p className="text-lg font-semibold text-foreground">{formatTarget(kpi)}</p>
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Deviation</p>
+            <p
+              className={`text-lg font-semibold ${
+                isBad ? "text-foreground" : "text-foreground"
+              }`}
+            >
+              {devLabel}
             </p>
           </div>
         </div>
-        <Button asChild variant="outline">
-          <Link to="/recommendations">
-            Open Recommendations
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function AttentionRow({ kpi, isHero }: { kpi: Kpi; isHero: boolean }) {
-  const pct = gapPct(kpi);
-  const Icon = kpi.icon;
-  return (
-    <li className="rounded-lg border border-border bg-card p-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">
-              {kpi.label}
-              {isHero && (
-                <span className="ml-2 text-[10px] font-medium uppercase tracking-wide text-destructive">
-                  · top priority
-                </span>
-              )}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {formatValue(kpi)} vs {formatTarget(kpi)}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-destructive">{formatDelta(kpi)}</span>
-          <Button asChild size="sm" variant="ghost">
-            <Link to="/recommendations" search={{ focus: kpi.slug }}>
-              Plan
-              <ArrowRight className="ml-1 h-3.5 w-3.5" />
-            </Link>
-          </Button>
-        </div>
       </div>
-      <div className="mt-2">
-        <Progress value={pct} className="h-1.5" />
-      </div>
-    </li>
-  );
-}
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline gap-1.5">
-      <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
-      <span className="font-semibold text-foreground">{value}</span>
+      <div className="h-64 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <XAxis
+              dataKey="day"
+              tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
+              tickLine={false}
+              axisLine={false}
+              width={48}
+              domain={["auto", "auto"]}
+            />
+            <Tooltip
+              contentStyle={{
+                background: "var(--color-card)",
+                border: "1px solid var(--color-border)",
+                borderRadius: 8,
+                fontSize: 12,
+              }}
+              labelFormatter={(d) => `Day ${d}`}
+              formatter={(v: number) => [formatValue(kpi, v), kpi.label]}
+            />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="var(--color-foreground)"
+              strokeWidth={2}
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="mt-4 border-t border-border pt-3">
+        <p className="text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">Flagged by AI:</span>{" "}
+          {signal?.signal ?? "Awaiting AI signal for this metric."}
+        </p>
+      </div>
     </div>
   );
 }
 
-function healthBanner(status: "healthy" | "watch" | "needs-attention") {
-  if (status === "needs-attention") {
-    return {
-      label: "Needs attention",
-      Icon: AlertTriangle,
-      wrap: "border-destructive/30 bg-destructive/5",
-      iconWrap: "bg-destructive/10 text-destructive",
-    };
-  }
-  if (status === "watch") {
-    return {
-      label: "Watch",
-      Icon: AlertTriangle,
-      wrap: "border-amber-500/30 bg-amber-500/5",
-      iconWrap: "bg-amber-500/10 text-amber-600",
-    };
-  }
-  return {
-    label: "Healthy",
-    Icon: ShieldCheck,
-    wrap: "border-emerald-500/30 bg-emerald-500/5",
-    iconWrap: "bg-emerald-500/10 text-emerald-600",
-  };
+/* ---------- Right: AI panel ---------- */
+
+function AiPanel({
+  signals,
+  error,
+  generatedAt,
+  activeSlug,
+  onSelectSignal,
+  onScrollToTable,
+}: {
+  signals: Signal[] | null;
+  error: string | null;
+  generatedAt: string | null;
+  activeSlug: string;
+  onSelectSignal: (slug: string) => void;
+  onScrollToTable: () => void;
+}) {
+  const ts = generatedAt
+    ? new Date(generatedAt).toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : null;
+
+  return (
+    <aside className="rounded-2xl bg-[oklch(0.18_0.015_158)] p-5 text-[oklch(0.97_0.004_158)] shadow-sm">
+      <div className="mb-4 flex items-center gap-2">
+        <Sparkles className="h-4 w-4 opacity-70" />
+        <h2 className="text-base font-semibold">Where to focus today</h2>
+      </div>
+      <p className="mb-5 text-xs opacity-70">
+        {ts ? `Updated ${ts}` : "Updating…"}
+      </p>
+
+      {error ? (
+        <div className="rounded-xl bg-white/5 p-4">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 opacity-80" />
+            <p className="text-sm leading-relaxed">
+              Unable to load recommendations. Refresh to try again. If the issue continues,
+              check that your data source is connected.
+            </p>
+          </div>
+        </div>
+      ) : signals === null ? (
+        <SignalSkeletons />
+      ) : signals.length === 0 ? (
+        <div className="rounded-xl bg-white/5 p-4 text-sm leading-relaxed opacity-90">
+          No signals flagged today. All tracked metrics are within 10% of target. Check back
+          after the next data refresh or review the full metric table below.
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {signals.map((s) => (
+            <li key={s.priority}>
+              <button
+                onClick={() => onSelectSignal(s.metricSlug)}
+                className={`w-full rounded-xl p-4 text-left transition-colors ${
+                  s.metricSlug === activeSlug
+                    ? "bg-white/10 ring-1 ring-white/20"
+                    : "bg-white/5 hover:bg-white/[0.08]"
+                }`}
+              >
+                <span className="inline-flex items-center rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                  Priority {s.priority}
+                </span>
+                <p className="mt-2 text-sm font-medium leading-snug">
+                  <span className="opacity-70">Signal:</span> {s.signal}
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed opacity-80">
+                  <span className="opacity-70">Impact:</span> {s.impact}
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed opacity-80">
+                  <span className="opacity-70">Next action:</span> {s.nextAction}
+                </p>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <button
+        onClick={onScrollToTable}
+        className="mt-5 inline-flex items-center gap-1 text-xs underline-offset-4 opacity-70 hover:underline hover:opacity-100"
+      >
+        View all metrics
+        <ArrowDown className="h-3 w-3" />
+      </button>
+    </aside>
+  );
 }
+
+function SignalSkeletons() {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs opacity-70">Analyzing data…</p>
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="animate-pulse rounded-xl bg-white/5 p-4">
+          <div className="h-4 w-16 rounded bg-white/10" />
+          <div className="mt-3 h-3 w-full rounded bg-white/10" />
+          <div className="mt-2 h-3 w-5/6 rounded bg-white/10" />
+          <div className="mt-2 h-3 w-3/4 rounded bg-white/10" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- Bottom: data table ---------- */
+
+const PERIODS = ["Last 7 days", "Last 30 days", "Last 90 days", "Quarter to date"];
+const CATEGORIES = ["All", "Financial", "Capacity", "Throughput", "Quality"] as const;
+
+const DataTable = forwardRef<HTMLDivElement>(function DataTable(_, ref) {
+  const [period, setPeriod] = useState(PERIODS[1]);
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("All");
+
+  const filtered = KPI_CATALOG.filter(
+    (k) => category === "All" || k.category === category,
+  );
+
+  return (
+    <div ref={ref} className="mt-8 rounded-2xl border border-border bg-card p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">All metrics</h2>
+          <p className="text-xs text-muted-foreground">
+            Full operational data for power users.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="h-9 rounded-md border border-border bg-card px-2.5 text-xs text-foreground"
+          >
+            {PERIODS.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </select>
+          <select
+            value={category}
+            onChange={(e) =>
+              setCategory(e.target.value as (typeof CATEGORIES)[number])
+            }
+            className="h-9 rounded-md border border-border bg-card px-2.5 text-xs text-foreground"
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <th className="py-2 pr-4 font-medium">Metric</th>
+              <th className="py-2 pr-4 font-medium">Category</th>
+              <th className="py-2 pr-4 font-medium">Current</th>
+              <th className="py-2 pr-4 font-medium">Target</th>
+              <th className="py-2 pr-4 font-medium">Deviation</th>
+              <th className="py-2 pr-4 font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((k) => {
+              const dev = signedDeviationPct(k);
+              return (
+                <tr key={k.slug} className="border-b border-border/60 last:border-0">
+                  <td className="py-3 pr-4 font-medium text-foreground">{k.label}</td>
+                  <td className="py-3 pr-4 text-muted-foreground">{k.category}</td>
+                  <td className="py-3 pr-4 text-foreground">{formatValue(k)}</td>
+                  <td className="py-3 pr-4 text-muted-foreground">{formatTarget(k)}</td>
+                  <td className="py-3 pr-4 text-foreground">
+                    {dev > 0 ? "+" : ""}
+                    {dev.toFixed(1)}%
+                  </td>
+                  <td className="py-3 pr-4">
+                    <StatusDot status={statusFor(k)} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+});
