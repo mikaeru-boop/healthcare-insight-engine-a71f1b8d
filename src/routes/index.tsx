@@ -109,7 +109,9 @@ function Dashboard() {
               <Sparkles className="h-3.5 w-3.5" />
               Refresh insights
             </button>
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-[oklch(0.7_0.18_320)] shadow-sm" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground shadow-sm">
+              <User className="h-4 w-4" />
+            </div>
           </div>
         </header>
 
