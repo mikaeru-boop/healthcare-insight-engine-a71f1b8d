@@ -188,6 +188,22 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
   const isBad =
     (kpi.better === "higher" && dev < 0) || (kpi.better === "lower" && dev > 0);
 
+  const { yDomain, yTicks } = useMemo(() => {
+    if (kpi.unit === "%") {
+      return { yDomain: [0, 100] as [number, number], yTicks: [0, 20, 40, 60, 80, 100] };
+    }
+    const values = trend.map((d) => d.value);
+    const rawMax = Math.max(kpi.target, kpi.current, ...values) * 1.25;
+    const rawMin = 0;
+    const pow = Math.pow(10, Math.max(0, Math.floor(Math.log10(rawMax)) - 1));
+    const step = Math.ceil(rawMax / 5 / pow) * pow;
+    const max = step * 5;
+    return {
+      yDomain: [rawMin, max] as [number, number],
+      yTicks: [0, step, step * 2, step * 3, step * 4, step * 5],
+    };
+  }, [kpi, trend]);
+
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
