@@ -94,18 +94,27 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Operations Dashboard
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            High-signal KPIs and AI-ranked priorities for today.
-          </p>
+      <div className="mx-auto max-w-[1480px] px-6 py-6">
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-[28px] font-semibold tracking-tight text-foreground">
+              Operations Dashboard
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              High-signal KPIs and AI-ranked priorities for today.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15">
+              <Sparkles className="h-3.5 w-3.5" />
+              Refresh insights
+            </button>
+            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-[oklch(0.7_0.18_320)] shadow-sm" />
+          </div>
         </header>
 
         {/* 3-column grid: 20 / 50 / 30 */}
-        <div className="grid gap-5 lg:[grid-template-columns:20%_50%_30%]">
+        <div className="grid gap-5 lg:[grid-template-columns:22%_minmax(0,1fr)_30%]">
           <KpiStack
             activeSlug={activeKpi.slug}
             onSelect={(slug) => setActiveSlug(slug)}
