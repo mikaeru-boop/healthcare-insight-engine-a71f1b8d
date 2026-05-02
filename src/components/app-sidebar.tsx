@@ -1,65 +1,91 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Sparkles, TrendingUp } from "lucide-react";
-
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
+  LayoutDashboard,
+  Sparkles,
+  ArrowLeftRight,
+  Calendar,
+  PieChart,
+  TrendingUp,
+  Search,
+  Settings,
+  HelpCircle,
+  Bell,
+  User,
+  RotateCcw,
+} from "lucide-react";
 
-const items = [
+const primary = [
   { title: "Overview", url: "/", icon: LayoutDashboard },
   { title: "Recommendations", url: "/recommendations", icon: Sparkles },
+  { title: "Transactions", url: "#", icon: ArrowLeftRight },
+  { title: "Schedule", url: "#", icon: Calendar },
+  { title: "Insights", url: "#", icon: Search },
+  { title: "Reports", url: "#", icon: PieChart },
+  { title: "Trends", url: "#", icon: TrendingUp },
+];
+
+const utility = [
+  { title: "Refresh", icon: RotateCcw },
+  { title: "Settings", icon: Settings },
+  { title: "Help", icon: HelpCircle },
+  { title: "Alerts", icon: Bell },
+  { title: "Profile", icon: User },
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
-  const isActive = (path: string) => currentPath === path;
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-sm">
-            <TrendingUp className="h-4 w-4" />
-          </div>
-          {!collapsed && (
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-sidebar-foreground">Ops Advisor</p>
-              <p className="truncate text-xs text-muted-foreground">Healthcare</p>
-            </div>
-          )}
+    <aside className="sticky top-0 flex h-screen w-16 shrink-0 flex-col items-center justify-between border-r border-border bg-card py-4">
+      {/* Logo */}
+      <div className="flex flex-col items-center gap-1">
+        <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+          <Sparkles className="h-4 w-4" />
         </div>
-      </SidebarHeader>
+        {primary.map((item) => {
+          const active = item.url !== "#" && currentPath === item.url;
+          const Icon = item.icon;
+          const Btn = (
+            <span
+              className={`group flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+                active
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+              title={item.title}
+              aria-label={item.title}
+            >
+              <Icon className="h-[18px] w-[18px]" />
+            </span>
+          );
+          return item.url === "#" ? (
+            <button key={item.title} type="button">
+              {Btn}
+            </button>
+          ) : (
+            <Link key={item.title} to={item.url}>
+              {Btn}
+            </Link>
+          );
+        })}
+      </div>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <Link to={item.url} className="flex items-center gap-2">
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+      <div className="flex flex-col items-center gap-1">
+        {utility.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.title}
+              type="button"
+              title={item.title}
+              aria-label={item.title}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Icon className="h-[18px] w-[18px]" />
+            </button>
+          );
+        })}
+      </div>
+    </aside>
   );
 }

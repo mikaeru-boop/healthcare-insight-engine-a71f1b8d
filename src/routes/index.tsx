@@ -94,18 +94,27 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Operations Dashboard
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            High-signal KPIs and AI-ranked priorities for today.
-          </p>
+      <div className="mx-auto max-w-[1480px] px-6 py-6">
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-[28px] font-semibold tracking-tight text-foreground">
+              Operations Dashboard
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              High-signal KPIs and AI-ranked priorities for today.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15">
+              <Sparkles className="h-3.5 w-3.5" />
+              Refresh insights
+            </button>
+            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-[oklch(0.7_0.18_320)] shadow-sm" />
+          </div>
         </header>
 
         {/* 3-column grid: 20 / 50 / 30 */}
-        <div className="grid gap-5 lg:[grid-template-columns:20%_50%_30%]">
+        <div className="grid gap-5 lg:[grid-template-columns:22%_minmax(0,1fr)_30%]">
           <KpiStack
             activeSlug={activeKpi.slug}
             onSelect={(slug) => setActiveSlug(slug)}
@@ -139,32 +148,44 @@ function KpiStack({
   onSelect: (slug: string) => void;
 }) {
   return (
-    <div className="space-y-3">
-      {KPI_CATALOG.map((k) => {
-        const active = k.slug === activeSlug;
-        return (
-          <button
-            key={k.slug}
-            onClick={() => onSelect(k.slug)}
-            className={`w-full rounded-2xl border bg-card p-4 text-left transition-all hover:border-foreground/30 ${
-              active ? "border-foreground/40 shadow-sm" : "border-border"
-            }`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-xs font-medium leading-tight text-muted-foreground">
-                {k.label}
-              </p>
-              <StatusDot status={statusFor(k)} />
-            </div>
-            <p className="mt-2 text-2xl font-semibold leading-none text-foreground">
-              {formatValue(k)}
-            </p>
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Target {formatTarget(k)}
-            </p>
-          </button>
-        );
-      })}
+    <div className="rounded-2xl border border-border bg-card p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="flex items-center justify-between px-2 pb-2 pt-1">
+        <h2 className="text-sm font-semibold text-foreground">Metrics</h2>
+        <span className="text-[11px] text-muted-foreground">{KPI_CATALOG.length} tracked</span>
+      </div>
+      <div className="space-y-1">
+        {KPI_CATALOG.map((k) => {
+          const active = k.slug === activeSlug;
+          return (
+            <button
+              key={k.slug}
+              onClick={() => onSelect(k.slug)}
+              className={`group flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
+                active ? "bg-sidebar-accent" : "hover:bg-muted"
+              }`}
+            >
+              <div className="min-w-0">
+                <p
+                  className={`truncate text-[13px] font-medium ${
+                    active ? "text-sidebar-accent-foreground" : "text-foreground"
+                  }`}
+                >
+                  {k.label}
+                </p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  Target {formatTarget(k)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">
+                  {formatValue(k)}
+                </span>
+                <StatusDot status={statusFor(k)} />
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -205,7 +226,7 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
   }, [kpi, trend]);
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6">
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -341,20 +362,20 @@ function AiPanel({
     : null;
 
   return (
-    <aside className="rounded-2xl bg-[oklch(0.18_0.015_158)] p-5 text-[oklch(0.97_0.004_158)] shadow-sm">
-      <div className="mb-4 flex items-center gap-2">
-        <Sparkles className="h-4 w-4 opacity-70" />
-        <h2 className="text-base font-semibold">Where to focus today</h2>
+    <aside className="rounded-2xl border border-primary/15 bg-sidebar-accent p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="mb-1 flex items-center gap-2 text-primary">
+        <Sparkles className="h-4 w-4" />
+        <h2 className="text-base font-semibold text-foreground">Where to focus today</h2>
       </div>
-      <p className="mb-5 text-xs opacity-70">
+      <p className="mb-5 text-xs text-muted-foreground">
         {ts ? `Updated ${ts}` : "Updating…"}
       </p>
 
       {error ? (
-        <div className="rounded-xl bg-white/5 p-4">
+        <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-start gap-2">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 opacity-80" />
-            <p className="text-sm leading-relaxed">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+            <p className="text-sm leading-relaxed text-foreground">
               Unable to load recommendations. Refresh to try again. If the issue continues,
               check that your data source is connected.
             </p>
@@ -363,43 +384,46 @@ function AiPanel({
       ) : signals === null ? (
         <SignalSkeletons />
       ) : signals.length === 0 ? (
-        <div className="rounded-xl bg-white/5 p-4 text-sm leading-relaxed opacity-90">
+        <div className="rounded-xl border border-border bg-card p-4 text-sm leading-relaxed text-muted-foreground">
           No signals flagged today. All tracked metrics are within 10% of target. Check back
           after the next data refresh or review the full metric table below.
         </div>
       ) : (
-        <ul className="space-y-3">
-          {signals.map((s) => (
-            <li key={s.priority}>
-              <button
-                onClick={() => onSelectSignal(s.metricSlug)}
-                className={`w-full rounded-xl p-4 text-left transition-colors ${
-                  s.metricSlug === activeSlug
-                    ? "bg-white/10 ring-1 ring-white/20"
-                    : "bg-white/5 hover:bg-white/[0.08]"
-                }`}
-              >
-                <span className="inline-flex items-center rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
-                  Priority {s.priority}
-                </span>
-                <p className="mt-2 text-sm font-medium leading-snug">
-                  <span className="opacity-70">Signal:</span> {s.signal}
-                </p>
-                <p className="mt-1.5 text-xs leading-relaxed opacity-80">
-                  <span className="opacity-70">Impact:</span> {s.impact}
-                </p>
-                <p className="mt-1.5 text-xs leading-relaxed opacity-80">
-                  <span className="opacity-70">Next action:</span> {s.nextAction}
-                </p>
-              </button>
-            </li>
-          ))}
+        <ul className="space-y-2.5">
+          {signals.map((s) => {
+            const active = s.metricSlug === activeSlug;
+            return (
+              <li key={s.priority}>
+                <button
+                  onClick={() => onSelectSignal(s.metricSlug)}
+                  className={`w-full rounded-xl border bg-card p-4 text-left transition-all ${
+                    active
+                      ? "border-primary/40 shadow-[0_2px_6px_rgba(91,73,232,0.12)]"
+                      : "border-border hover:border-primary/30"
+                  }`}
+                >
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    Priority {s.priority}
+                  </span>
+                  <p className="mt-2 text-sm font-medium leading-snug text-foreground">
+                    {s.signal}
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                    <span className="font-medium text-foreground/70">Impact:</span> {s.impact}
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                    <span className="font-medium text-foreground/70">Next action:</span> {s.nextAction}
+                  </p>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
 
       <button
         onClick={onScrollToTable}
-        className="mt-5 inline-flex items-center gap-1 text-xs underline-offset-4 opacity-70 hover:underline hover:opacity-100"
+        className="mt-5 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline"
       >
         View all metrics
         <ArrowDown className="h-3 w-3" />
@@ -410,14 +434,14 @@ function AiPanel({
 
 function SignalSkeletons() {
   return (
-    <div className="space-y-3">
-      <p className="text-xs opacity-70">Analyzing data…</p>
+    <div className="space-y-2.5">
+      <p className="text-xs text-muted-foreground">Analyzing data…</p>
       {[1, 2, 3].map((i) => (
-        <div key={i} className="animate-pulse rounded-xl bg-white/5 p-4">
-          <div className="h-4 w-16 rounded bg-white/10" />
-          <div className="mt-3 h-3 w-full rounded bg-white/10" />
-          <div className="mt-2 h-3 w-5/6 rounded bg-white/10" />
-          <div className="mt-2 h-3 w-3/4 rounded bg-white/10" />
+        <div key={i} className="animate-pulse rounded-xl border border-border bg-card p-4">
+          <div className="h-4 w-16 rounded bg-muted" />
+          <div className="mt-3 h-3 w-full rounded bg-muted" />
+          <div className="mt-2 h-3 w-5/6 rounded bg-muted" />
+          <div className="mt-2 h-3 w-3/4 rounded bg-muted" />
         </div>
       ))}
     </div>
@@ -438,7 +462,7 @@ const DataTable = forwardRef<HTMLDivElement>(function DataTable(_, ref) {
   );
 
   return (
-    <div ref={ref} className="mt-8 rounded-2xl border border-border bg-card p-5">
+    <div ref={ref} className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-foreground">All metrics</h2>
