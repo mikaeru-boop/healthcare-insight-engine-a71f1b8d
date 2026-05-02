@@ -362,20 +362,20 @@ function AiPanel({
     : null;
 
   return (
-    <aside className="rounded-2xl bg-[oklch(0.18_0.015_158)] p-5 text-[oklch(0.97_0.004_158)] shadow-sm">
-      <div className="mb-4 flex items-center gap-2">
-        <Sparkles className="h-4 w-4 opacity-70" />
-        <h2 className="text-base font-semibold">Where to focus today</h2>
+    <aside className="rounded-2xl border border-primary/15 bg-sidebar-accent p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="mb-1 flex items-center gap-2 text-primary">
+        <Sparkles className="h-4 w-4" />
+        <h2 className="text-base font-semibold text-foreground">Where to focus today</h2>
       </div>
-      <p className="mb-5 text-xs opacity-70">
+      <p className="mb-5 text-xs text-muted-foreground">
         {ts ? `Updated ${ts}` : "Updating…"}
       </p>
 
       {error ? (
-        <div className="rounded-xl bg-white/5 p-4">
+        <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-start gap-2">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 opacity-80" />
-            <p className="text-sm leading-relaxed">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+            <p className="text-sm leading-relaxed text-foreground">
               Unable to load recommendations. Refresh to try again. If the issue continues,
               check that your data source is connected.
             </p>
@@ -384,43 +384,46 @@ function AiPanel({
       ) : signals === null ? (
         <SignalSkeletons />
       ) : signals.length === 0 ? (
-        <div className="rounded-xl bg-white/5 p-4 text-sm leading-relaxed opacity-90">
+        <div className="rounded-xl border border-border bg-card p-4 text-sm leading-relaxed text-muted-foreground">
           No signals flagged today. All tracked metrics are within 10% of target. Check back
           after the next data refresh or review the full metric table below.
         </div>
       ) : (
-        <ul className="space-y-3">
-          {signals.map((s) => (
-            <li key={s.priority}>
-              <button
-                onClick={() => onSelectSignal(s.metricSlug)}
-                className={`w-full rounded-xl p-4 text-left transition-colors ${
-                  s.metricSlug === activeSlug
-                    ? "bg-white/10 ring-1 ring-white/20"
-                    : "bg-white/5 hover:bg-white/[0.08]"
-                }`}
-              >
-                <span className="inline-flex items-center rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
-                  Priority {s.priority}
-                </span>
-                <p className="mt-2 text-sm font-medium leading-snug">
-                  <span className="opacity-70">Signal:</span> {s.signal}
-                </p>
-                <p className="mt-1.5 text-xs leading-relaxed opacity-80">
-                  <span className="opacity-70">Impact:</span> {s.impact}
-                </p>
-                <p className="mt-1.5 text-xs leading-relaxed opacity-80">
-                  <span className="opacity-70">Next action:</span> {s.nextAction}
-                </p>
-              </button>
-            </li>
-          ))}
+        <ul className="space-y-2.5">
+          {signals.map((s) => {
+            const active = s.metricSlug === activeSlug;
+            return (
+              <li key={s.priority}>
+                <button
+                  onClick={() => onSelectSignal(s.metricSlug)}
+                  className={`w-full rounded-xl border bg-card p-4 text-left transition-all ${
+                    active
+                      ? "border-primary/40 shadow-[0_2px_6px_rgba(91,73,232,0.12)]"
+                      : "border-border hover:border-primary/30"
+                  }`}
+                >
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    Priority {s.priority}
+                  </span>
+                  <p className="mt-2 text-sm font-medium leading-snug text-foreground">
+                    {s.signal}
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                    <span className="font-medium text-foreground/70">Impact:</span> {s.impact}
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                    <span className="font-medium text-foreground/70">Next action:</span> {s.nextAction}
+                  </p>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
 
       <button
         onClick={onScrollToTable}
-        className="mt-5 inline-flex items-center gap-1 text-xs underline-offset-4 opacity-70 hover:underline hover:opacity-100"
+        className="mt-5 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline"
       >
         View all metrics
         <ArrowDown className="h-3 w-3" />
@@ -431,14 +434,14 @@ function AiPanel({
 
 function SignalSkeletons() {
   return (
-    <div className="space-y-3">
-      <p className="text-xs opacity-70">Analyzing data…</p>
+    <div className="space-y-2.5">
+      <p className="text-xs text-muted-foreground">Analyzing data…</p>
       {[1, 2, 3].map((i) => (
-        <div key={i} className="animate-pulse rounded-xl bg-white/5 p-4">
-          <div className="h-4 w-16 rounded bg-white/10" />
-          <div className="mt-3 h-3 w-full rounded bg-white/10" />
-          <div className="mt-2 h-3 w-5/6 rounded bg-white/10" />
-          <div className="mt-2 h-3 w-3/4 rounded bg-white/10" />
+        <div key={i} className="animate-pulse rounded-xl border border-border bg-card p-4">
+          <div className="h-4 w-16 rounded bg-muted" />
+          <div className="mt-3 h-3 w-full rounded bg-muted" />
+          <div className="mt-2 h-3 w-5/6 rounded bg-muted" />
+          <div className="mt-2 h-3 w-3/4 rounded bg-muted" />
         </div>
       ))}
     </div>
