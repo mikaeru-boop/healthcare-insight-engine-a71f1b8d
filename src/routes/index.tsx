@@ -148,32 +148,44 @@ function KpiStack({
   onSelect: (slug: string) => void;
 }) {
   return (
-    <div className="space-y-3">
-      {KPI_CATALOG.map((k) => {
-        const active = k.slug === activeSlug;
-        return (
-          <button
-            key={k.slug}
-            onClick={() => onSelect(k.slug)}
-            className={`w-full rounded-2xl border bg-card p-4 text-left transition-all hover:border-foreground/30 ${
-              active ? "border-foreground/40 shadow-sm" : "border-border"
-            }`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-xs font-medium leading-tight text-muted-foreground">
-                {k.label}
-              </p>
-              <StatusDot status={statusFor(k)} />
-            </div>
-            <p className="mt-2 text-2xl font-semibold leading-none text-foreground">
-              {formatValue(k)}
-            </p>
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Target {formatTarget(k)}
-            </p>
-          </button>
-        );
-      })}
+    <div className="rounded-2xl border border-border bg-card p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="flex items-center justify-between px-2 pb-2 pt-1">
+        <h2 className="text-sm font-semibold text-foreground">Metrics</h2>
+        <span className="text-[11px] text-muted-foreground">{KPI_CATALOG.length} tracked</span>
+      </div>
+      <div className="space-y-1">
+        {KPI_CATALOG.map((k) => {
+          const active = k.slug === activeSlug;
+          return (
+            <button
+              key={k.slug}
+              onClick={() => onSelect(k.slug)}
+              className={`group flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
+                active ? "bg-sidebar-accent" : "hover:bg-muted"
+              }`}
+            >
+              <div className="min-w-0">
+                <p
+                  className={`truncate text-[13px] font-medium ${
+                    active ? "text-sidebar-accent-foreground" : "text-foreground"
+                  }`}
+                >
+                  {k.label}
+                </p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  Target {formatTarget(k)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">
+                  {formatValue(k)}
+                </span>
+                <StatusDot status={statusFor(k)} />
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
