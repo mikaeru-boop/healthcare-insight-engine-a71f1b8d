@@ -162,28 +162,26 @@ function KpiStack({
             <button
               key={k.slug}
               onClick={() => onSelect(k.slug)}
-              className={`group flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
+              className={`group flex w-full flex-col gap-1 rounded-xl px-3 py-3 text-left transition-colors ${
                 active ? "bg-sidebar-accent" : "hover:bg-muted"
               }`}
             >
-              <div className="min-w-0">
+              <div className="flex items-center justify-between gap-2">
                 <p
-                  className={`truncate text-[13px] font-medium ${
-                    active ? "text-sidebar-accent-foreground" : "text-foreground"
+                  className={`truncate text-[12px] font-medium uppercase tracking-wide ${
+                    active ? "text-sidebar-accent-foreground" : "text-muted-foreground"
                   }`}
                 >
                   {k.label}
                 </p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  Target {formatTarget(k)}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">
-                  {formatValue(k)}
-                </span>
                 <StatusDot status={statusFor(k)} />
               </div>
+              <p className="text-[26px] font-semibold leading-none tracking-tight text-foreground">
+                {formatValue(k)}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Target {formatTarget(k)}
+              </p>
             </button>
           );
         })}
