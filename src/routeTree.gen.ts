@@ -9,9 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicRecommendRouteImport } from './routes/api/public/recommend'
 
+const RecommendationsRoute = RecommendationsRouteImport.update({
+  id: '/recommendations',
+  path: '/recommendations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -25,32 +31,43 @@ const ApiPublicRecommendRoute = ApiPublicRecommendRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/recommendations': typeof RecommendationsRoute
   '/api/public/recommend': typeof ApiPublicRecommendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/recommendations': typeof RecommendationsRoute
   '/api/public/recommend': typeof ApiPublicRecommendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/recommendations': typeof RecommendationsRoute
   '/api/public/recommend': typeof ApiPublicRecommendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/recommend'
+  fullPaths: '/' | '/recommendations' | '/api/public/recommend'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/recommend'
-  id: '__root__' | '/' | '/api/public/recommend'
+  to: '/' | '/recommendations' | '/api/public/recommend'
+  id: '__root__' | '/' | '/recommendations' | '/api/public/recommend'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  RecommendationsRoute: typeof RecommendationsRoute
   ApiPublicRecommendRoute: typeof ApiPublicRecommendRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/recommendations': {
+      id: '/recommendations'
+      path: '/recommendations'
+      fullPath: '/recommendations'
+      preLoaderRoute: typeof RecommendationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  RecommendationsRoute: RecommendationsRoute,
   ApiPublicRecommendRoute: ApiPublicRecommendRoute,
 }
 export const routeTree = rootRouteImport

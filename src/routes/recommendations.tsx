@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/recommendations")({
   component: Index,
   head: () => ({
     meta: [
@@ -136,7 +136,6 @@ function Index() {
           </div>
         </div>
       </header>
-
       <main className="mx-auto max-w-5xl px-6 py-8">
         <Card>
           <CardHeader>
@@ -275,5 +274,5 @@ function Index() {
         )}
       </main>
     </div>
-  );
+  )
 }
