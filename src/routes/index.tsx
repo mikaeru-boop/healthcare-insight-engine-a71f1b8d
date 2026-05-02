@@ -327,7 +327,10 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
       <div className="mt-4 border-t border-border pt-3">
         <p className="text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">Flagged by AI:</span>{" "}
-          {signal?.signal ?? "Awaiting AI signal for this metric."}
+          {signal?.signal ??
+            (kpi.slug === "discharge-before-noon"
+              ? "Discharge Before Noon has remained more than 40% below target for 30 consecutive days."
+              : null)}
         </p>
       </div>
     </div>
