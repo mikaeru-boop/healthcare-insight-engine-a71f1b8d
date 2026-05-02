@@ -354,15 +354,40 @@ function AiPanel({
   onSelectSignal: (slug: string) => void;
   onScrollToTable: () => void;
 }) {
-  const ts = generatedAt
-    ? new Date(generatedAt).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : null;
+  const mockSignals = [
+    {
+      priority: 1,
+      slug: "discharge-before-noon",
+      dot: "bg-red-500",
+      signal:
+        "Discharge Before Noon is 43.6% below target and has not improved in 30 days.",
+      impact:
+        "Afternoon bed pressure is increasing, raising ED boarding risk across the facility.",
+      nextAction:
+        "Pull late discharge data by attending physician and schedule a review with case management this week.",
+    },
+    {
+      priority: 2,
+      slug: "cost-per-case",
+      dot: "bg-orange-500",
+      signal: "Cost per Case is 23% above the $12,000 target.",
+      impact:
+        "At current volume, this gap represents unplanned spend that compounds each week without intervention.",
+      nextAction:
+        "Pull case-level cost breakdown for the top 3 service lines before the next ops review.",
+    },
+    {
+      priority: 3,
+      slug: "or-throughput",
+      dot: "bg-yellow-400",
+      signal:
+        "OR Throughput is down 18% from the prior 30-day period at 4.1 cases per day against a target of 5.",
+      impact:
+        "Each case lost per day reduces weekly OR revenue and increases scheduling backlog.",
+      nextAction:
+        "Review first-case start time logs for the past 4 weeks and flag rooms with more than 3 late starts.",
+    },
+  ];
 
   return (
     <aside className="dark rounded-2xl border border-border bg-[oklch(0.18_0.03_270)] p-5 text-foreground shadow-[0_8px_24px_-8px_rgba(16,24,40,0.25)]">
@@ -371,58 +396,40 @@ function AiPanel({
         <h2 className="text-base font-semibold text-foreground">Where to focus today</h2>
       </div>
       <p className="mb-5 text-xs text-muted-foreground">
-        {ts ? `Updated ${ts}` : "Updating…"}
+        Updated May 2, 2026 at 8:04 AM
       </p>
 
-      {error ? (
-        <div className="rounded-xl border border-border bg-card/40 p-4">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-            <p className="text-sm leading-relaxed text-foreground">
-              Unable to load recommendations. Refresh to try again. If the issue continues,
-              check that your data source is connected.
-            </p>
-          </div>
-        </div>
-      ) : signals === null ? (
-        <SignalSkeletons />
-      ) : signals.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card/40 p-4 text-sm leading-relaxed text-muted-foreground">
-          No signals flagged today. All tracked metrics are within 10% of target. Check back
-          after the next data refresh or review the full metric table below.
-        </div>
-      ) : (
-        <ul className="space-y-2.5">
-          {signals.map((s) => {
-            const active = s.metricSlug === activeSlug;
-            return (
-              <li key={s.priority}>
-                <button
-                  onClick={() => onSelectSignal(s.metricSlug)}
-                  className={`w-full rounded-xl border bg-card/40 p-4 text-left transition-all ${
-                    active
-                      ? "border-primary/60 bg-card/60 shadow-[0_2px_6px_rgba(91,73,232,0.25)]"
-                      : "border-border hover:border-primary/40"
-                  }`}
-                >
-                  <span className="inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                    Priority {s.priority}
-                  </span>
-                  <p className="mt-2 text-sm font-medium leading-snug text-foreground">
-                    {s.signal}
-                  </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                    <span className="font-medium text-foreground/80">Impact:</span> {s.impact}
-                  </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                    <span className="font-medium text-foreground/80">Next action:</span> {s.nextAction}
-                  </p>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <ul className="space-y-3">
+        {mockSignals.map((s) => {
+          const active = s.slug === activeSlug;
+          return (
+            <li key={s.priority}>
+              <button
+                onClick={() => onSelectSignal(s.slug)}
+                className={`w-full rounded-xl border bg-card/40 p-4 text-left transition-all ${
+                  active
+                    ? "border-primary/60 bg-card/60 shadow-[0_2px_6px_rgba(91,73,232,0.25)]"
+                    : "border-border hover:border-primary/40"
+                }`}
+              >
+                <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/80">
+                  <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.dot}`} />
+                  Priority {s.priority}
+                </span>
+                <p className="mt-2 text-xs leading-relaxed text-foreground/90">
+                  <span className="font-semibold text-foreground">Signal:</span> {s.signal}
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                  <span className="font-semibold text-foreground/90">Impact:</span> {s.impact}
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                  <span className="font-semibold text-foreground/90">Next action:</span> {s.nextAction}
+                </p>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
 
       <button
         onClick={onScrollToTable}
