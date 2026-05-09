@@ -12,4 +12,6 @@ export function useRequireRole() {
       navigate({ to: "/role-select" });
     }
   }, [hydrated, profile.role, navigate]);
+
+  return { hydrated, profile };
 }
