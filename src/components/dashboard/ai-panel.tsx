@@ -1,4 +1,4 @@
-import { Sparkles, AlertTriangle } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { PRIORITY_DOT, type SignalRecord } from "@/lib/signals-data";
 
 export function AiPanel({
@@ -61,39 +61,6 @@ export function AiPanel({
             </li>
           );
         })}
-      </ul>
-    </aside>
-  );
-}
-
-export function AiPanelError({ signals }: { signals: SignalRecord[] }) {
-  return (
-    <aside className="dark rounded-2xl border border-border bg-[oklch(0.18_0.03_270)] p-5 text-foreground shadow-[0_8px_24px_-8px_rgba(16,24,40,0.25)]">
-      <div className="mb-1 flex items-center gap-2 text-primary">
-        <Sparkles className="h-4 w-4" />
-        <h2 className="text-base font-semibold text-foreground">Where to focus today</h2>
-      </div>
-      <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-        <p className="text-xs leading-relaxed text-amber-100/90">
-          Signals unavailable. Showing last known priorities.
-        </p>
-      </div>
-      <ul className="space-y-3">
-        {signals.map((s) => (
-          <li
-            key={s.id}
-            className="rounded-xl border border-border bg-card/40 p-4 opacity-80"
-          >
-            <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/80">
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${PRIORITY_DOT[s.priority]}`} />
-              Priority {s.priority}
-            </span>
-            <p className="mt-2 text-xs leading-relaxed text-foreground/90">
-              <span className="font-semibold text-foreground">Signal:</span> {s.signal}
-            </p>
-          </li>
-        ))}
       </ul>
     </aside>
   );
