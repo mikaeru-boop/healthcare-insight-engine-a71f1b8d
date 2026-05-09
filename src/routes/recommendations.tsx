@@ -81,9 +81,7 @@ function RecommendationsPage() {
 
         <div className="space-y-3">
           {groups[tab].length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center">
-              <p className="text-sm text-muted-foreground">No signals in this state.</p>
-            </div>
+            <EmptyState tab={tab} />
           ) : (
             groups[tab].map((s) => (
               <SignalCard
@@ -159,5 +157,31 @@ function SignalCard({ signal, onOpen }: { signal: SignalRecord; onOpen: () => vo
 
       <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
     </button>
+  );
+}
+
+function EmptyState({ tab }: { tab: TabId }) {
+  const copy: Record<TabId, { icon: React.ReactNode; text: string }> = {
+    active: {
+      icon: <AlertCircle className="h-5 w-5 text-muted-foreground" />,
+      text: "No active signals. New AI-flagged priorities will appear here as they're detected.",
+    },
+    "in-progress": {
+      icon: <Clock className="h-5 w-5 text-muted-foreground" />,
+      text: "No signals actioned yet. When you escalate or note a signal, it will appear here.",
+    },
+    resolved: {
+      icon: <CheckCircle2 className="h-5 w-5 text-muted-foreground" />,
+      text: "No resolved signals yet. Signals close automatically when the metric returns within threshold.",
+    },
+  };
+  const { icon, text } = copy[tab];
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+        {icon}
+      </div>
+      <p className="max-w-sm text-sm text-muted-foreground">{text}</p>
+    </div>
   );
 }
