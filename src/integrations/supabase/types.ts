@@ -14,7 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      kpis: {
+        Row: {
+          better: string
+          category: string
+          created_at: string
+          current_value: number
+          icon: string
+          id: string
+          label: string
+          slug: string
+          sort_order: number
+          target_value: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          better: string
+          category: string
+          created_at?: string
+          current_value: number
+          icon: string
+          id?: string
+          label: string
+          slug: string
+          sort_order?: number
+          target_value: number
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          better?: string
+          category?: string
+          created_at?: string
+          current_value?: number
+          icon?: string
+          id?: string
+          label?: string
+          slug?: string
+          sort_order?: number
+          target_value?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      signal_action_log: {
+        Row: {
+          action: string
+          actor: string
+          created_at: string
+          id: string
+          role: string
+          signal_id: string
+          timestamp: string
+        }
+        Insert: {
+          action: string
+          actor: string
+          created_at?: string
+          id?: string
+          role: string
+          signal_id: string
+          timestamp: string
+        }
+        Update: {
+          action?: string
+          actor?: string
+          created_at?: string
+          id?: string
+          role?: string
+          signal_id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_action_log_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signal_history: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          outcome: string
+          signal_id: string
+          sort_order: number
+          summary: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          outcome: string
+          signal_id: string
+          sort_order?: number
+          summary: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          outcome?: string
+          signal_id?: string
+          sort_order?: number
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_history_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signals: {
+        Row: {
+          created_at: string
+          detected_at: string
+          id: string
+          impact: string
+          metric_slug: string
+          next_action: string
+          priority: number
+          signal: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          detected_at: string
+          id: string
+          impact: string
+          metric_slug: string
+          next_action: string
+          priority: number
+          signal: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          detected_at?: string
+          id?: string
+          impact?: string
+          metric_slug?: string
+          next_action?: string
+          priority?: number
+          signal?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signals_metric_slug_fkey"
+            columns: ["metric_slug"]
+            isOneToOne: false
+            referencedRelation: "kpis"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
