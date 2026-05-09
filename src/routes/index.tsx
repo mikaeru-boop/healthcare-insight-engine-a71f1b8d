@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Sparkles } from "lucide-react";
+import { Sparkles, AlertTriangle } from "lucide-react";
 import {
   KPI_CATALOG,
   formatTarget,
@@ -63,11 +63,22 @@ function Dashboard() {
   );
   const [openSignal, setOpenSignal] = useState<SignalRecord | null>(null);
 
+  // Loading state for AI panel + KPI stack (also re-runs on role switch)
+  const [loading, setLoading] = useState(true);
+  const [signalsError] = useState(false); // wired for failure display
+
   useEffect(() => {
     if (hydrated && !profile.role) {
       navigate({ to: "/role-select" });
     }
   }, [hydrated, profile.role, navigate]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    setLoading(true);
+    const t = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(t);
+  }, [hydrated, profile.role, profile.department]);
 
   const activeKpi = useMemo<Kpi>(() => {
     return (
@@ -89,14 +100,20 @@ function Dashboard() {
         />
 
         <div className="grid gap-5 lg:[grid-template-columns:22%_minmax(0,1fr)_30%]">
-          <KpiStack activeSlug={activeKpi.slug} onSelect={setActiveSlug} />
+          {loading ? <KpiStackSkeleton /> : <KpiStack activeSlug={activeKpi.slug} onSelect={setActiveSlug} />}
           <MetricDetail kpi={activeKpi} signal={activeSignal} />
-          <AiPanel
-            signals={visibleSignals}
-            activeSlug={activeKpi.slug}
-            onSelectSignal={(slug) => setActiveSlug(slug)}
-            onOpenSignal={(s) => setOpenSignal(s)}
-          />
+          {loading ? (
+            <AiPanelSkeleton />
+          ) : signalsError ? (
+            <AiPanelError signals={visibleSignals} />
+          ) : (
+            <AiPanel
+              signals={visibleSignals}
+              activeSlug={activeKpi.slug}
+              onSelectSignal={(slug) => setActiveSlug(slug)}
+              onOpenSignal={(s) => setOpenSignal(s)}
+            />
+          )}
         </div>
       </div>
 
