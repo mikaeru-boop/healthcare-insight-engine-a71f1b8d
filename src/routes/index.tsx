@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Sparkles, AlertCircle, ArrowDown, User } from "lucide-react";
+import { Sparkles, AlertCircle, User } from "lucide-react";
 import {
   KPI_CATALOG,
   formatTarget,
