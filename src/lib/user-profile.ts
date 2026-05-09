@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 
 export type Role = "vp-operations" | "cfo" | "department-director";
 
@@ -106,7 +106,3 @@ export function roleLabel(r: Role | null): string {
   return ROLES.find((x) => x.id === r)?.label ?? "Unassigned";
 }
 
-/** No-op effect helper to keep imports tidy. */
-export const _noop = () => {
-  useEffect(() => {}, []);
-};
