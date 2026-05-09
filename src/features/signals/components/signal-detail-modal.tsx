@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Clock, History, ListChecks, AlertTriangle, ChevronDown } from "lucide-react";
 import {
-  logSignalAction,
+  useLogSignalAction,
   PRIORITY_DOT,
   useSignals,
   type SignalRecord,
   type SignalStatus,
 } from "@/features/signals/data/signals-store";
-import { KPI_CATALOG } from "@/features/kpis/data/kpi-catalog";
+import { useKpis } from "@/features/kpis/data/kpi-catalog";
 import { useUserProfile, roleLabel } from "@/features/profile/data/user-profile";
 
 /**
@@ -41,12 +41,14 @@ export function SignalDetailModal({
 }) {
   const profile = useUserProfile();
   const all = useSignals();
+  const { data: kpis = [] } = useKpis();
+  const logAction = useLogSignalAction();
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Always read the latest record from the store
   const signal = initialSignal ? all.find((s) => s.id === initialSignal.id) ?? initialSignal : null;
   if (!signal) return null;
-  const kpi = KPI_CATALOG.find((k) => k.slug === signal.metricSlug);
+  const kpi = kpis.find((k) => k.slug === signal.metricSlug);
 
   function handleAction(a: (typeof ACTIONS)[number]) {
     if (!signal) return;
@@ -56,11 +58,15 @@ export function SignalDetailModal({
       hour: "numeric",
       minute: "2-digit",
     });
-    logSignalAction(signal.id, a.id, {
-      timestamp: ts,
-      action: a.logLabel,
-      actor: profile.name,
-      role: roleLabel(profile.role),
+    logAction.mutate({
+      id: signal.id,
+      newStatus: a.id,
+      entry: {
+        timestamp: ts,
+        action: a.logLabel,
+        actor: profile.name,
+        role: roleLabel(profile.role),
+      },
     });
     setMenuOpen(false);
   }

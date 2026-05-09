@@ -1,7 +1,12 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import appCss from "../styles.css?url";
 import { AppSidebar } from "@/components/app-sidebar";
+
+interface RouterContext {
+  queryClient: QueryClient;
+}
 
 function NotFoundComponent() {
   return (
@@ -25,7 +30,7 @@ function NotFoundComponent() {
   );
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -66,12 +71,15 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      <AppSidebar />
-      <main className="min-w-0 flex-1">
-        <Outlet />
-      </main>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar />
+        <main className="min-w-0 flex-1">
+          <Outlet />
+        </main>
+      </div>
+    </QueryClientProvider>
   );
 }

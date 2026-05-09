@@ -5,12 +5,16 @@ import {
   DollarSign,
   Gauge,
   RotateCcw,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Pure data + pure helpers for the six operational KPIs.
- * No React, no styling — display lives in features/kpis/components.
+ * KPI data layer.
+ * - Pure helpers (deviation, status, formatting, trend) stay here.
+ * - The KPI list itself is fetched from Supabase via `useKpis()`.
  */
 
 export type Kpi = {
@@ -25,76 +29,59 @@ export type Kpi = {
   category: "Financial" | "Capacity" | "Throughput" | "Quality";
 };
 
-export const KPI_CATALOG: Kpi[] = [
-  {
-    slug: "cost-per-case",
-    label: "Cost per Case",
-    current: 14760,
-    target: 12000,
-    unit: "USD",
-    better: "lower",
-    icon: DollarSign,
-    category: "Financial",
-  },
-  {
-    slug: "bed-utilization",
-    label: "Bed Utilization",
-    current: 78,
-    target: 85,
-    unit: "%",
-    better: "higher",
-    icon: BedDouble,
-    category: "Capacity",
-  },
-  {
-    slug: "or-throughput",
-    label: "OR Throughput",
-    current: 4.1,
-    target: 5.0,
-    unit: "cases/day",
-    better: "higher",
-    icon: Gauge,
-    category: "Throughput",
-  },
-  {
-    slug: "length-of-stay",
-    label: "Length of Stay",
-    current: 4.6,
-    target: 4.2,
-    unit: "days",
-    better: "lower",
-    icon: Activity,
-    category: "Quality",
-  },
-  {
-    slug: "readmission-rate",
-    label: "Readmission Rate",
-    current: 11.2,
-    target: 9.5,
-    unit: "%",
-    better: "lower",
-    icon: RotateCcw,
-    category: "Quality",
-  },
-  {
-    slug: "discharge-before-noon",
-    label: "Discharge Before Noon",
-    current: 31,
-    target: 55,
-    unit: "%",
-    better: "higher",
-    icon: Clock,
-    category: "Throughput",
-  },
-];
+const ICON_MAP: Record<string, LucideIcon> = {
+  DollarSign,
+  BedDouble,
+  Gauge,
+  Activity,
+  RotateCcw,
+  Clock,
+};
 
-/** Absolute % deviation from target. */
+function rowToKpi(r: {
+  slug: string;
+  label: string;
+  current_value: number;
+  target_value: number;
+  unit: string;
+  better: string;
+  category: string;
+  icon: string;
+}): Kpi {
+  return {
+    slug: r.slug,
+    label: r.label,
+    current: Number(r.current_value),
+    target: Number(r.target_value),
+    unit: r.unit,
+    better: (r.better as "higher" | "lower") ?? "higher",
+    category: r.category as Kpi["category"],
+    icon: ICON_MAP[r.icon] ?? HelpCircle,
+  };
+}
+
+export const kpisQueryKey = ["kpis"] as const;
+
+async function fetchKpis(): Promise<Kpi[]> {
+  const { data, error } = await supabase
+    .from("kpis")
+    .select("*")
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(rowToKpi);
+}
+
+export function useKpis() {
+  return useQuery({ queryKey: kpisQueryKey, queryFn: fetchKpis });
+}
+
+/* ---------- Pure helpers (unchanged) ---------- */
+
 export function deviationPct(k: Kpi): number {
   if (k.target === 0) return 0;
   return Math.abs((k.current - k.target) / k.target) * 100;
 }
 
-/** Signed % deviation: positive = above target, negative = below. */
 export function signedDeviationPct(k: Kpi): number {
   if (k.target === 0) return 0;
   return ((k.current - k.target) / k.target) * 100;
@@ -102,7 +89,6 @@ export function signedDeviationPct(k: Kpi): number {
 
 export type Status = "green" | "yellow" | "red";
 
-/** Status by deviation from target, regardless of direction. */
 export function statusFor(k: Kpi): Status {
   const d = deviationPct(k);
   if (d <= 10) return "green";
@@ -126,11 +112,9 @@ export function formatTarget(k: Kpi): string {
   return formatValue(k, k.target);
 }
 
-/** Generate a deterministic 30-day trend ending at current. */
 export function trendFor(k: Kpi): { day: number; value: number }[] {
   const days = 30;
   const start = k.current * (k.better === "higher" ? 0.85 : 1.18);
-  // simple seeded noise
   let seed = k.slug.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const rand = () => {
     seed = (seed * 9301 + 49297) % 233280;

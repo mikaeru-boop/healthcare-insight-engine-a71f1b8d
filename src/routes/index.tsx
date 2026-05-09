@@ -1,14 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  KPI_CATALOG,
   signedDeviationPct,
+  useKpis,
   type Kpi,
 } from "@/features/kpis/data/kpi-catalog";
 import {
   activeSignals,
   inProgressSignals,
   useSignals,
+  useSignalsQuery,
   type SignalRecord,
 } from "@/features/signals/data/signals-store";
 import { TopNav } from "@/features/dashboard/components/top-nav";
@@ -37,6 +38,8 @@ export const Route = createFileRoute("/")({
 function OperationsDashboardPage() {
   const { hydrated, profile } = useRequireRole();
 
+  const { data: kpis = [], isLoading: kpisLoading } = useKpis();
+  const { isLoading: signalsLoading } = useSignalsQuery();
   const all = useSignals();
   // Visible signals on dashboard = active + in-progress, sorted by priority.
   const visibleSignals = useMemo(
@@ -47,31 +50,44 @@ function OperationsDashboardPage() {
     [all],
   );
 
-  const [activeSlug, setActiveSlug] = useState<string>(
-    visibleSignals[0]?.metricSlug ?? KPI_CATALOG[0].slug,
-  );
+  const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const [openSignal, setOpenSignal] = useState<SignalRecord | null>(null);
 
-  // Loading state for AI panel + KPI stack (also re-runs on role switch)
-  const [loading, setLoading] = useState(true);
+  // Brief simulated latency on role/department change to match the PRD's
+  // skeleton behavior, in addition to actual query loading.
+  const [roleLoading, setRoleLoading] = useState(true);
 
   useEffect(() => {
     if (!hydrated) return;
-    setLoading(true);
-    const t = setTimeout(() => setLoading(false), 600);
+    setRoleLoading(true);
+    const t = setTimeout(() => setRoleLoading(false), 600);
     return () => clearTimeout(t);
   }, [hydrated, profile.role, profile.department]);
 
-  const activeKpi = useMemo<Kpi>(() => {
-    return (
-      KPI_CATALOG.find((k) => k.slug === activeSlug) ??
-      KPI_CATALOG.slice().sort(
-        (a, b) => Math.abs(signedDeviationPct(b)) - Math.abs(signedDeviationPct(a)),
-      )[0]
-    );
-  }, [activeSlug]);
+  const loading = kpisLoading || signalsLoading || roleLoading;
 
-  const activeSignal = visibleSignals.find((s) => s.metricSlug === activeKpi.slug);
+  const activeKpi = useMemo<Kpi | undefined>(() => {
+    if (kpis.length === 0) return undefined;
+    if (activeSlug) {
+      const found = kpis.find((k: Kpi) => k.slug === activeSlug);
+      if (found) return found;
+    }
+    const firstSignalSlug = visibleSignals[0]?.metricSlug;
+    if (firstSignalSlug) {
+      const found = kpis.find((k: Kpi) => k.slug === firstSignalSlug);
+      if (found) return found;
+    }
+    return kpis
+      .slice()
+      .sort(
+        (a: Kpi, b: Kpi) =>
+          Math.abs(signedDeviationPct(b)) - Math.abs(signedDeviationPct(a)),
+      )[0];
+  }, [activeSlug, kpis, visibleSignals]);
+
+  const activeSignal = activeKpi
+    ? visibleSignals.find((s) => s.metricSlug === activeKpi.slug)
+    : undefined;
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,9 +98,13 @@ function OperationsDashboardPage() {
         />
 
         <div className="grid gap-5 lg:[grid-template-columns:22%_minmax(0,1fr)_30%]">
-          {loading ? <KpiStackSkeleton /> : <KpiStack activeSlug={activeKpi.slug} onSelect={setActiveSlug} />}
-          <MetricDetailCard kpi={activeKpi} signal={activeSignal} />
-          {loading ? (
+          {loading || !activeKpi ? (
+            <KpiStackSkeleton />
+          ) : (
+            <KpiStack activeSlug={activeKpi.slug} onSelect={setActiveSlug} />
+          )}
+          {activeKpi && <MetricDetailCard kpi={activeKpi} signal={activeSignal} />}
+          {loading || !activeKpi ? (
             <PrioritySignalPanelSkeleton />
           ) : (
             <PrioritySignalPanel
