@@ -7,6 +7,7 @@ import {
   activeSignals,
   inProgressSignals,
   resolvedSignals,
+  useSignals,
   type SignalRecord,
 } from "@/lib/signals-data";
 import { KPI_CATALOG } from "@/lib/kpi-catalog";
@@ -31,13 +32,14 @@ function RecommendationsPage() {
   const [tab, setTab] = useState<TabId>("active");
   const [openSignal, setOpenSignal] = useState<SignalRecord | null>(null);
 
+  const all = useSignals();
   const groups = useMemo(
     () => ({
-      active: activeSignals(),
-      "in-progress": inProgressSignals(),
-      resolved: resolvedSignals(),
+      active: activeSignals(all),
+      "in-progress": inProgressSignals(all),
+      resolved: resolvedSignals(all),
     }),
-    [],
+    [all],
   );
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode; count: number }[] = [
