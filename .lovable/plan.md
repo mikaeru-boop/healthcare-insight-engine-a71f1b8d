@@ -1,79 +1,26 @@
-## Problem
+## README.md for Healthcare Ops Advisor
 
-The current Overview is a flat 4-card KPI grid. The data is accurate but every card looks equal — users have to read all of them, do the gap math in their heads, and decide what matters. That's why the bounce rate is 60%: nothing tells the executive *what to look at first* or *what to do next*.
+I'll create a `README.md` at the repo root summarizing the prototype. Since this project is synced to GitHub via Lovable's bidirectional integration, committing the file in Lovable automatically pushes it to your connected GitHub repo — no separate push step is needed (and I don't have direct git/GitHub API access from here).
 
-## Goal
+### Proposed README sections
 
-Rebuild `/` so that within the first 3 seconds a user sees:
-1. The single most urgent issue (hero)
-2. A ranked list of what needs attention vs what's healthy
-3. A direct path into the AI recommendation flow, pre-loaded with the problem KPIs
+1. **Project**: Healthcare Ops Advisor — internal analytics prototype for VPs of Operations, CFOs, and department directors at acute care health systems.
+2. **Hypothesis**: New users bounce (60% first-visit) because a wall of metrics hides what matters. If we surface a single prioritized AI signal alongside a scannable KPI stack, a new user can identify the top issue and take action in under 30 seconds without onboarding.
+3. **Scenario**: A VP of Operations opens the dashboard Monday morning. Within 30 seconds they read the top AI-flagged signal, click into the related KPI, and see trend + next action.
+4. **Key screens**:
+   - `/` Dashboard — three-column layout: KPI stack (left), metric detail with 30-day trend vs. target (center), AI recommendation panel with dark background (right).
+   - `/recommendations` — full recommendations view.
+5. **User flow**: Land on dashboard → scan 6 KPI tiles (status color + value vs. target) → read top priority signal in dark right panel → click signal or KPI → center panel updates with trend chart, deviation, and AI-flagged context line.
+6. **Build decisions**:
+   - **Stack**: TanStack Start (React 19, Vite 7), Tailwind v4, shadcn/ui, Recharts, Lovable Cloud (Supabase) backend, Lovable AI Gateway for recommendations server function.
+   - **Three-column hierarchy**: dark right panel intentionally creates visual anchor; light center/left for data density.
+   - **KPI catalog** centralized in `src/lib/kpi-catalog.ts` (status thresholds: ≤10% green, ≤20% yellow, >20% red; deterministic seeded trends).
+   - **AI signals** via `getRecommendations` server function; static demo fallback copy used in prototype so stakeholders see realistic output without waiting for the model.
+   - **Priority badges** as filled color circles (red/orange/yellow) for instant scan.
+   - **Y-axis 0–100% with target reference line** to make deviation legible at a glance.
+7. **Run locally**: `bun install`, `bun dev`.
+8. **Repo / sync note**: Code is mirrored to GitHub through Lovable's two-way sync; commits made in Lovable appear on the connected repo automatically.
 
-No new data — same 4 KPIs, same backend. Pure interface upgrade to prove the thesis.
+### Out of scope
 
-## New Overview layout
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  Q3 2026 · Ops Health: NEEDS ATTENTION                      │
-│  2 of 4 KPIs off target · Est. impact $1.6M/qtr             │
-├─────────────────────────────────────────────────────────────┤
-│  TOP PRIORITY                              [Act on this →]  │
-│  Cost per Discharge is $1,650 over target                   │
-│  $12,450 actual vs $10,800 goal  ·  15% gap                 │
-│  Sparkline / trend arrow                                    │
-├─────────────────────────────────────────────────────────────┤
-│  Needs attention (2)         │  On track (2)                │
-│  • OR Utilization  −14 pts   │  • (compact rows)            │
-│  • ED Throughput   −0.9 /hr  │                              │
-│                              │                              │
-│  [Generate AI action plan for off-target KPIs →]            │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Sections
-
-1. **Health banner** — Aggregate status pill (`Healthy` / `Watch` / `Needs attention`), count of off-target KPIs, and a rough $ exposure figure derived from the worst cost KPI gap. Sets context instantly.
-
-2. **Hero priority card** — The single worst-performing KPI, computed by largest normalized gap. Shows: plain-English headline ("Cost per Discharge is $1,650 over target"), current vs target, gap as both absolute and %, status color bar, and a primary CTA button "Get action plan" that deep-links to `/recommendations` with that KPI pre-loaded.
-
-3. **Two-column triage**:
-   - **Needs attention** — sorted by gap descending, each row shows label, delta from target with sign, mini progress bar, click-through.
-   - **On track** — compact list, muted styling, just label + check.
-
-4. **Bulk CTA** — "Generate AI action plan for all off-target KPIs" — pre-loads the recommendations form with only the underperformers.
-
-### Visual signal hierarchy
-
-- Off-target uses `destructive` color tokens; on-target uses muted/secondary. No more equal-weight cards.
-- Hero card is ~2× the height of triage rows and uses `bg-card` with a colored left border indicating severity.
-- Numbers shown with explicit deltas (`−14 pts`, `+$1,650`) instead of raw values requiring mental math.
-
-## Cross-page wiring
-
-`/recommendations` already accepts metric rows in local state. Add support for prefilling via TanStack Router search params:
-
-- `?focus=cost-per-discharge` → loads only that one row + a second placeholder
-- `?focus=off-target` → loads all KPIs whose `gapPct < 95`
-
-The Overview's CTAs link with these params. Recommendations route reads `Route.useSearch()`, maps the slug(s) to the existing KPI catalog, and seeds `metrics` state on mount. If no param is present, behavior is unchanged.
-
-## Files to change
-
-- `src/routes/index.tsx` — full rewrite of the Overview component using the layout above. Extract a small `KPI_CATALOG` constant (the existing `KPIS` array, lightly extended with a slug + optional `dollarImpact` for the cost KPI) and helper functions: `rankByGap`, `formatDelta`, `aggregateHealth`.
-- `src/routes/recommendations.tsx` — add `validateSearch` for `{ focus?: string }`, read it in the component, and seed `metrics` from the shared catalog when present. Also accept the catalog from a new shared module.
-- `src/lib/kpi-catalog.ts` — new file. Single source of truth for the 4 KPIs (slug, label, current, target, unit, better, optional unit cost / $ impact). Both routes import from here so the data stays in sync.
-
-## Out of scope
-
-- No backend or schema changes.
-- No new AI prompt — the existing `/api/public/recommend` endpoint is reused as-is.
-- Sidebar and root layout untouched.
-- No charts library; tiny inline progress / trend marks only (sparklines optional, can be a div bar).
-
-## Acceptance
-
-- Loading `/` shows a clear health verdict and a single "do this next" recommendation above the fold at the current viewport (571×853).
-- Clicking the hero CTA lands on `/recommendations` with that KPI's row already filled.
-- Clicking "Generate AI action plan for off-target KPIs" lands on `/recommendations` with all underperforming KPI rows pre-filled and ready to submit.
-- On-target KPIs are visually de-emphasized so the eye goes to the problems first.
+- I cannot directly invoke `git push` or the GitHub API. The push happens automatically via the existing Lovable ↔ GitHub sync once the file is committed in the project. If the repo isn't connected yet, you'll need to connect it from the Plus (+) menu → GitHub.
