@@ -88,8 +88,6 @@ function Dashboard() {
           <MetricDetail kpi={activeKpi} signal={activeSignal} />
           {loading ? (
             <AiPanelSkeleton />
-          ) : signalsError ? (
-            <AiPanelError signals={visibleSignals} />
           ) : (
             <AiPanel
               signals={visibleSignals}
