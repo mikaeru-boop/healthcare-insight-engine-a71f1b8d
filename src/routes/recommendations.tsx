@@ -7,6 +7,7 @@ import {
   activeSignals,
   inProgressSignals,
   resolvedSignals,
+  PRIORITY_DOT,
   useSignals,
   type SignalRecord,
 } from "@/lib/signals-data";
