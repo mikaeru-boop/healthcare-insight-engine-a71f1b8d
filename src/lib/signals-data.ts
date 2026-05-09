@@ -1,4 +1,6 @@
-export type SignalStatus = "active" | "in-progress" | "resolved";
+import { useSyncExternalStore } from "react";
+
+export type SignalStatus = "active" | "in-progress" | "resolved" | "escalated";
 
 export type ActionLogEntry = {
   timestamp: string; // human-readable
@@ -219,16 +221,52 @@ export const SIGNALS: SignalRecord[] = [
   },
 ];
 
-export function getSignalById(id: string): SignalRecord | undefined {
-  return SIGNALS.find((s) => s.id === id);
+/* ---------- Reactive store ---------- */
+
+let signalState: SignalRecord[] = SIGNALS;
+const listeners = new Set<() => void>();
+
+function emit() {
+  signalState = [...signalState];
+  listeners.forEach((l) => l());
 }
 
-export function activeSignals(): SignalRecord[] {
-  return SIGNALS.filter((s) => s.status === "active");
+function subscribe(cb: () => void) {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
 }
-export function inProgressSignals(): SignalRecord[] {
-  return SIGNALS.filter((s) => s.status === "in-progress");
+
+export function useSignals(): SignalRecord[] {
+  return useSyncExternalStore(subscribe, () => signalState, () => signalState);
 }
-export function resolvedSignals(): SignalRecord[] {
-  return SIGNALS.filter((s) => s.status === "resolved");
+
+export function getSignalById(id: string): SignalRecord | undefined {
+  return signalState.find((s) => s.id === id);
+}
+
+export function logSignalAction(
+  id: string,
+  newStatus: SignalStatus,
+  entry: ActionLogEntry,
+) {
+  signalState = signalState.map((s) =>
+    s.id === id
+      ? { ...s, status: newStatus, actionLog: [...s.actionLog, entry] }
+      : s,
+  );
+  listeners.forEach((l) => l());
+}
+
+export function activeSignals(list: SignalRecord[] = signalState): SignalRecord[] {
+  return list.filter((s) => s.status === "active");
+}
+export function inProgressSignals(
+  list: SignalRecord[] = signalState,
+): SignalRecord[] {
+  return list.filter((s) => s.status === "in-progress" || s.status === "escalated");
+}
+export function resolvedSignals(
+  list: SignalRecord[] = signalState,
+): SignalRecord[] {
+  return list.filter((s) => s.status === "resolved");
 }
