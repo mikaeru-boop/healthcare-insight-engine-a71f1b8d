@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   KPI_CATALOG,
@@ -14,6 +14,7 @@ import {
 import { TopNav } from "@/components/top-nav";
 import { SignalDetailModal } from "@/components/signal-detail-modal";
 import { useHydrated, useUserProfile } from "@/lib/user-profile";
+import { useRequireRole } from "@/hooks/use-require-role";
 import { KpiStack } from "@/components/dashboard/kpi-stack";
 import { MetricDetail } from "@/components/dashboard/metric-detail";
 import { AiPanel, AiPanelError } from "@/components/dashboard/ai-panel";
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
-  const navigate = useNavigate();
+  useRequireRole();
   const profile = useUserProfile();
   const hydrated = useHydrated();
 
@@ -56,12 +57,6 @@ function Dashboard() {
   // Loading state for AI panel + KPI stack (also re-runs on role switch)
   const [loading, setLoading] = useState(true);
   const [signalsError] = useState(false); // wired for failure display
-
-  useEffect(() => {
-    if (hydrated && !profile.role) {
-      navigate({ to: "/role-select" });
-    }
-  }, [hydrated, profile.role, navigate]);
 
   useEffect(() => {
     if (!hydrated) return;
