@@ -123,10 +123,11 @@ function SignalCard({ signal, onOpen }: { signal: SignalRecord; onOpen: () => vo
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {kpi?.label ?? signal.metricSlug}
           </span>
+          <StatusBadge status={signal.status} />
           {signal.status === "resolved" && signal.history.length > 0 && (
             <span className="text-[10px] text-muted-foreground">
               · {signal.history.length} prior instance{signal.history.length === 1 ? "" : "s"} on record
@@ -136,7 +137,7 @@ function SignalCard({ signal, onOpen }: { signal: SignalRecord; onOpen: () => vo
         <p className="mt-1 text-sm font-medium text-foreground">{signal.signal}</p>
         <p className="mt-1.5 text-xs text-muted-foreground">{signal.impact}</p>
 
-        {signal.status === "in-progress" && lastAction && (
+        {(signal.status === "in-progress" || signal.status === "escalated") && lastAction && (
           <p className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Clock className="h-3 w-3" />
             Last action <span className="text-foreground">{lastAction.timestamp}</span> ·{" "}
