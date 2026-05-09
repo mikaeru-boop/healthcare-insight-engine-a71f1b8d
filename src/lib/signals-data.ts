@@ -19,7 +19,6 @@ export type SignalRecord = {
   id: string;
   metricSlug: string;
   priority: number;
-  dot: string; // tailwind bg-* class
   status: SignalStatus;
   signal: string;
   impact: string;
@@ -28,6 +27,13 @@ export type SignalRecord = {
   history: HistoryInstance[];
   actionLog: ActionLogEntry[];
 };
+
+export const PRIORITY_DOT: Record<number, string> = {
+  1: "bg-red-500",
+  2: "bg-orange-500",
+  3: "bg-yellow-400",
+};
+
 
 export const SIGNALS: SignalRecord[] = [
   {
