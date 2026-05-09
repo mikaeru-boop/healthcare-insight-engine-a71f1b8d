@@ -1,8 +1,9 @@
 import {
-  KPI_CATALOG,
   formatTarget,
   formatValue,
   statusFor,
+  useKpis,
+  type Kpi,
   type Status,
 } from "@/features/kpis/data/kpi-catalog";
 
@@ -17,14 +18,15 @@ export function KpiStack({
   activeSlug: string;
   onSelect: (slug: string) => void;
 }) {
+  const { data: kpis = [] } = useKpis();
   return (
     <div className="rounded-2xl border border-border bg-card p-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <div className="flex items-center justify-between px-2 pb-2 pt-1">
         <h2 className="text-sm font-semibold text-foreground">Metrics</h2>
-        <span className="text-[11px] text-muted-foreground">{KPI_CATALOG.length} tracked</span>
+        <span className="text-[11px] text-muted-foreground">{kpis.length} tracked</span>
       </div>
       <div className="space-y-1">
-        {KPI_CATALOG.map((k) => {
+        {kpis.map((k: Kpi) => {
           const active = k.slug === activeSlug;
           return (
             <button

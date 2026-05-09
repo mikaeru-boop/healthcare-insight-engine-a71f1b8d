@@ -56,7 +56,7 @@ async function fetchSignals(): Promise<SignalRecord[]> {
   if (error) throw error;
 
   return (data ?? []).map((row): SignalRecord => {
-    const history = ((row.signal_history as HistoryInstance[] & { sort_order: number }[]) ?? [])
+    const history = ((row.signal_history as Array<HistoryInstance & { sort_order?: number }>) ?? [])
       .slice()
       .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
       .map(({ date, summary, outcome }) => ({ date, summary, outcome }));

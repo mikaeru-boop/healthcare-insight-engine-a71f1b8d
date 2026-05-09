@@ -1,6 +1,6 @@
 import { Sparkles, Clock, CheckCircle2, ChevronRight } from "lucide-react";
 import { PRIORITY_DOT, type SignalRecord } from "@/features/signals/data/signals-store";
-import { KPI_CATALOG } from "@/features/kpis/data/kpi-catalog";
+import { useKpis } from "@/features/kpis/data/kpi-catalog";
 
 /**
  * Row card used inside the Priority Tracker tabs.
@@ -14,7 +14,8 @@ export function PriorityTrackerCard({
   signal: SignalRecord;
   onOpen: () => void;
 }) {
-  const kpi = KPI_CATALOG.find((k) => k.slug === signal.metricSlug);
+  const { data: kpis = [] } = useKpis();
+  const kpi = kpis.find((k) => k.slug === signal.metricSlug);
   const lastAction = signal.actionLog[signal.actionLog.length - 1];
 
   return (
