@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Clock, History, ListChecks, AlertTriangle, ChevronDown } from "lucide-react";
-import { logSignalAction, useSignals, type SignalRecord, type SignalStatus } from "@/lib/signals-data";
+import { logSignalAction, PRIORITY_DOT, useSignals, type SignalRecord, type SignalStatus } from "@/lib/signals-data";
 import { KPI_CATALOG } from "@/lib/kpi-catalog";
 import { useUserProfile, roleLabel } from "@/lib/user-profile";
 
