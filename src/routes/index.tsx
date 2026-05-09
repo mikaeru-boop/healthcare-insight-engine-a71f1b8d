@@ -127,13 +127,8 @@ function Dashboard() {
             generatedAt={generatedAt}
             activeSlug={activeKpi.slug}
             onSelectSignal={(slug) => setActiveSlug(slug)}
-            onScrollToTable={() =>
-              tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-            }
           />
         </div>
-
-        <DataTable ref={tableRef} />
       </div>
     </div>
   );
