@@ -45,7 +45,6 @@ function Dashboard() {
   const [recError, setRecError] = useState<string | null>(null);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
-  const tableRef = useRef<HTMLDivElement>(null);
 
   // Fire AI call on load.
   useEffect(() => {
