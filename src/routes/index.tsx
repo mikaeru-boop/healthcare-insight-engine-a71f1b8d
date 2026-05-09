@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
-  const navigate = useNavigate();
+  useRequireRole();
   const profile = useUserProfile();
   const hydrated = useHydrated();
 
@@ -57,12 +57,6 @@ function Dashboard() {
   // Loading state for AI panel + KPI stack (also re-runs on role switch)
   const [loading, setLoading] = useState(true);
   const [signalsError] = useState(false); // wired for failure display
-
-  useEffect(() => {
-    if (hydrated && !profile.role) {
-      navigate({ to: "/role-select" });
-    }
-  }, [hydrated, profile.role, navigate]);
 
   useEffect(() => {
     if (!hydrated) return;
