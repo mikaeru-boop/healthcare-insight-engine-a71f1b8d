@@ -129,6 +129,45 @@ src/
 
 ---
 
+## Next steps
+
+The prototype is intentionally local-first (profile in `localStorage`, no SSO). The roadmap below turns it into a multi-user product backed by Lovable Cloud.
+
+### 1. Authentication
+
+Replace the local profile with real accounts via Lovable Cloud Auth.
+
+- **Sign-in methods.** Email + password and Google sign-in (Lovable Cloud managed OAuth — no client ID setup needed).
+- **Auth pages.** Add `/login`, `/signup`, and `/reset-password` routes. Keep them outside any `_authenticated` layout.
+- **Session bootstrap.** In the root, set up `supabase.auth.onAuthStateChange` BEFORE calling `getSession()`, and expose the user via router context so `beforeLoad` guards can read it synchronously.
+- **Route guards.** Move the dashboard, `/recommendations`, `/welcome`, and `/role-select` under a pathless `_authenticated` layout that `throw redirect({ to: "/login" })` when there is no session. Retire `useRequireRole` in favour of this gate.
+- **Email verification.** Keep auto-confirm OFF; users verify their email before first sign-in.
+
+### 2. Profiles + role-based access (RBAC)
+
+Roles drive what each user sees on the dashboard. They MUST live in their own table — never on `profiles` — to prevent privilege-escalation bugs.
+
+- **`profiles` table.** `id` (FK → `auth.users.id`, cascade), `display_name`, `email`, `department`, `created_at`. Auto-created by a trigger on signup. RLS: a user can only `select`/`update` their own row.
+- **`app_role` enum.** `'vp_operations' | 'cfo' | 'department_director'` (matches the PRD).
+- **`user_roles` table.** `(user_id, role)` unique pair, FK to `auth.users`, cascade delete. RLS-enabled.
+- **`has_role(_user_id, _role)` SECURITY DEFINER function.** Used inside every RLS policy that gates by role — avoids recursive RLS on `user_roles` itself.
+- **Role assignment flow.** First sign-in routes to `/role-select`, which now writes to `user_roles` instead of `localStorage`. Directors also write `department` to `profiles`.
+- **Dashboard personalisation.** `KpiStack` and `PrioritySignalPanel` filter by the caller's role + department server-side via RLS, so each user only sees the signals they're allowed to act on.
+
+### 3. Multi-user signals
+
+- **Action log identity.** `signal_action_log.actor` becomes a FK to `auth.users.id`; `role` is derived server-side from `user_roles` (not trusted from the client).
+- **Realtime updates.** Enable Supabase Realtime on `signals` and `signal_action_log` so when one director resolves a signal, every other open dashboard updates instantly.
+- **Assignment.** Add `signals.assigned_to` (nullable FK → `auth.users.id`) plus an "Assign to me / Reassign" action in `SignalDetailModal`.
+
+### 4. Audit, analytics, and polish
+
+- **Audit trail.** Add an admin-only `/audit` route (gated by `has_role(uid, 'vp_operations')`) that lists every action across all signals.
+- **AI recommendations per user.** Pass the caller's role + department into the `recommendations` server function so the Lovable AI Gateway prompt is tailored.
+- **Notifications.** Optional: email or in-app toast when a high-priority signal is detected for the user's department.
+
+---
+
 ## Run locally
 
 ```bash
