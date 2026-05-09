@@ -227,11 +227,6 @@ export const SIGNALS: SignalRecord[] = [
 let signalState: SignalRecord[] = SIGNALS;
 const listeners = new Set<() => void>();
 
-function emit() {
-  signalState = [...signalState];
-  listeners.forEach((l) => l());
-}
-
 function subscribe(cb: () => void) {
   listeners.add(cb);
   return () => listeners.delete(cb);
