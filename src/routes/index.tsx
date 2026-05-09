@@ -4,24 +4,24 @@ import {
   KPI_CATALOG,
   signedDeviationPct,
   type Kpi,
-} from "@/lib/kpi-catalog";
+} from "@/features/kpis/data/kpi-catalog";
 import {
   activeSignals,
   inProgressSignals,
   useSignals,
   type SignalRecord,
-} from "@/lib/signals-data";
-import { TopNav } from "@/components/top-nav";
-import { SignalDetailModal } from "@/components/signal-detail-modal";
-import { useHydrated, useUserProfile } from "@/lib/user-profile";
-import { useRequireRole } from "@/hooks/use-require-role";
-import { KpiStack } from "@/components/dashboard/kpi-stack";
-import { MetricDetail } from "@/components/dashboard/metric-detail";
-import { AiPanel } from "@/components/dashboard/ai-panel";
-import { KpiStackSkeleton, AiPanelSkeleton } from "@/components/dashboard/panel-skeletons";
+} from "@/features/signals/data/signals-store";
+import { TopNav } from "@/features/dashboard/components/top-nav";
+import { SignalDetailModal } from "@/features/signals/components/signal-detail-modal";
+import { useRequireRole } from "@/features/profile/hooks/use-require-role";
+import { KpiStack } from "@/features/kpis/components/kpi-stack";
+import { KpiStackSkeleton } from "@/features/kpis/components/kpi-stack-skeleton";
+import { MetricDetailCard } from "@/features/kpis/components/metric-detail-card";
+import { PrioritySignalPanel } from "@/features/signals/components/priority-signal-panel";
+import { PrioritySignalPanelSkeleton } from "@/features/signals/components/priority-signal-panel-skeleton";
 
 export const Route = createFileRoute("/")({
-  component: Dashboard,
+  component: OperationsDashboardPage,
   head: () => ({
     meta: [
       { title: "Operations Dashboard — Healthcare Ops Advisor" },
@@ -34,10 +34,8 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-function Dashboard() {
-  useRequireRole();
-  const profile = useUserProfile();
-  const hydrated = useHydrated();
+function OperationsDashboardPage() {
+  const { hydrated, profile } = useRequireRole();
 
   const all = useSignals();
   // Visible signals on dashboard = active + in-progress, sorted by priority.
@@ -85,11 +83,11 @@ function Dashboard() {
 
         <div className="grid gap-5 lg:[grid-template-columns:22%_minmax(0,1fr)_30%]">
           {loading ? <KpiStackSkeleton /> : <KpiStack activeSlug={activeKpi.slug} onSelect={setActiveSlug} />}
-          <MetricDetail kpi={activeKpi} signal={activeSignal} />
+          <MetricDetailCard kpi={activeKpi} signal={activeSignal} />
           {loading ? (
-            <AiPanelSkeleton />
+            <PrioritySignalPanelSkeleton />
           ) : (
-            <AiPanel
+            <PrioritySignalPanel
               signals={visibleSignals}
               activeSlug={activeKpi.slug}
               onSignalClick={(signal) => {

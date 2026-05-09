@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
-import { RolePicker } from "@/components/role-picker";
-import { setProfile, useUserProfile } from "@/lib/user-profile";
+import { RolePicker } from "@/features/profile/components/role-picker";
+import { setProfile, useUserProfile } from "@/features/profile/data/user-profile";
 
 export const Route = createFileRoute("/role-select")({
   component: RoleSelectPage,

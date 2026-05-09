@@ -1,14 +1,14 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, Target } from "lucide-react";
-import { roleLabel, ROLES } from "@/lib/user-profile";
-import { useRequireRole } from "@/hooks/use-require-role";
+import { roleLabel, ROLES } from "@/features/profile/data/user-profile";
+import { useRequireRole } from "@/features/profile/hooks/use-require-role";
 import {
   KPI_CATALOG,
   formatTarget,
   formatValue,
   signedDeviationPct,
   statusFor,
-} from "@/lib/kpi-catalog";
+} from "@/features/kpis/data/kpi-catalog";
 
 export const Route = createFileRoute("/welcome")({
   component: WelcomePage,
