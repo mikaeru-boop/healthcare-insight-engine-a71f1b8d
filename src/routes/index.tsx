@@ -350,44 +350,35 @@ function AiPanel({
                   onSelectSignal(s.metricSlug);
                   onOpenSignal(s);
                 }}
-                className={`flex w-full gap-3 rounded-xl border bg-card/40 p-5 text-left transition-all ${
+                className={`w-full rounded-xl border bg-card/40 p-5 text-left transition-all ${
                   active
                     ? "border-primary/60 bg-card/60 shadow-[0_2px_6px_rgba(91,73,232,0.25)]"
                     : "border-border hover:border-primary/40"
                 }`}
               >
-                {/* Leading priority chip */}
-                <div
-                  className={`flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg ${s.dot} text-white`}
-                >
-                  <span className="text-[8px] font-semibold uppercase leading-none tracking-wider opacity-90">
-                    P
-                  </span>
-                  <span className="text-base font-bold leading-none">
-                    {s.priority}
-                  </span>
-                </div>
+                <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/80">
+                  <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.dot}`} />
+                  Priority {s.priority}
+                </span>
 
-                <div className="min-w-0 flex-1">
-                  {/* Headline: the signal */}
-                  <p className="text-[13px] font-semibold leading-snug text-foreground">
-                    {s.signal}
+                {/* Headline: the signal */}
+                <p className="mt-2 text-[13px] font-semibold leading-snug text-foreground">
+                  {s.signal}
+                </p>
+
+                {/* Secondary: impact */}
+                <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                  {s.impact}
+                </p>
+
+                {/* Directive: next action, set apart */}
+                <div className="mt-3 border-t border-border/60 pt-2.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-primary/80">
+                    Next action
                   </p>
-
-                  {/* Secondary: impact */}
-                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                    {s.impact}
+                  <p className="mt-1 text-[12px] leading-snug text-foreground/90">
+                    {s.nextAction}
                   </p>
-
-                  {/* Directive: next action, set apart */}
-                  <div className="mt-3 border-t border-border/60 pt-2.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-primary/80">
-                      Next action
-                    </p>
-                    <p className="mt-1 text-[12px] leading-snug text-foreground/90">
-                      {s.nextAction}
-                    </p>
-                  </div>
                 </div>
               </button>
             </li>
