@@ -361,5 +361,3 @@ function AiPanel({
   );
 }
 
-// Reference to keep tree-shake happy and avoid unused import warning.
-void SIGNALS;
