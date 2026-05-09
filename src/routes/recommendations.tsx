@@ -7,6 +7,7 @@ import {
   activeSignals,
   inProgressSignals,
   resolvedSignals,
+  PRIORITY_DOT,
   useSignals,
   type SignalRecord,
 } from "@/lib/signals-data";
@@ -116,7 +117,7 @@ function SignalCard({ signal, onOpen }: { signal: SignalRecord; onOpen: () => vo
       className="group flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-5 text-left transition-colors hover:border-primary/40"
     >
       <div className="mt-1 flex flex-col items-center gap-1">
-        <span className={`inline-block h-3 w-3 rounded-full ${signal.dot}`} />
+        <span className={`inline-block h-3 w-3 rounded-full ${PRIORITY_DOT[signal.priority]}`} />
         <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           P{signal.priority}
         </span>

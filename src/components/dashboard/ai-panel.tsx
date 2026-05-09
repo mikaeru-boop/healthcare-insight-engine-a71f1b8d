@@ -1,5 +1,5 @@
 import { Sparkles, AlertTriangle } from "lucide-react";
-import type { SignalRecord } from "@/lib/signals-data";
+import { PRIORITY_DOT, type SignalRecord } from "@/lib/signals-data";
 
 export function AiPanel({
   signals,
@@ -39,7 +39,7 @@ export function AiPanel({
                 }`}
               >
                 <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/80">
-                  <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.dot}`} />
+                  <span className={`inline-block h-2.5 w-2.5 rounded-full ${PRIORITY_DOT[s.priority]}`} />
                   Priority {s.priority}
                 </span>
 
@@ -91,7 +91,7 @@ export function AiPanelError({ signals }: { signals: SignalRecord[] }) {
             className="rounded-xl border border-border bg-card/40 p-4 opacity-80"
           >
             <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-foreground/80">
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.dot}`} />
+              <span className={`inline-block h-2.5 w-2.5 rounded-full ${PRIORITY_DOT[s.priority]}`} />
               Priority {s.priority}
             </span>
             <p className="mt-2 text-xs leading-relaxed text-foreground/90">

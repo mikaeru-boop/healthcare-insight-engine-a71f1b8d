@@ -19,7 +19,6 @@ export type SignalRecord = {
   id: string;
   metricSlug: string;
   priority: number;
-  dot: string; // tailwind bg-* class
   status: SignalStatus;
   signal: string;
   impact: string;
@@ -29,12 +28,18 @@ export type SignalRecord = {
   actionLog: ActionLogEntry[];
 };
 
+export const PRIORITY_DOT: Record<number, string> = {
+  1: "bg-red-500",
+  2: "bg-orange-500",
+  3: "bg-yellow-400",
+};
+
+
 export const SIGNALS: SignalRecord[] = [
   {
     id: "sig-001",
     metricSlug: "discharge-before-noon",
     priority: 1,
-    dot: "bg-red-500",
     status: "active",
     signal:
       "Discharge Before Noon is 43.6% below target and has not improved in 30 days.",
@@ -73,7 +78,6 @@ export const SIGNALS: SignalRecord[] = [
     id: "sig-002",
     metricSlug: "cost-per-case",
     priority: 2,
-    dot: "bg-orange-500",
     status: "in-progress",
     signal: "Cost per Case is 23% above the $12,000 target.",
     impact:
@@ -113,7 +117,6 @@ export const SIGNALS: SignalRecord[] = [
     id: "sig-003",
     metricSlug: "or-throughput",
     priority: 3,
-    dot: "bg-yellow-400",
     status: "in-progress",
     signal:
       "OR Throughput is down 18% from the prior 30-day period at 4.1 cases per day against a target of 5.",
@@ -148,7 +151,6 @@ export const SIGNALS: SignalRecord[] = [
     id: "sig-r01",
     metricSlug: "readmission-rate",
     priority: 2,
-    dot: "bg-orange-500",
     status: "resolved",
     signal: "30-day Readmission Rate exceeded 12% for cardiac patients.",
     impact: "Increased CMS penalty exposure for the next reporting period.",
@@ -191,7 +193,6 @@ export const SIGNALS: SignalRecord[] = [
     id: "sig-l01",
     metricSlug: "length-of-stay",
     priority: 3,
-    dot: "bg-yellow-400",
     status: "resolved",
     signal: "Average Length of Stay drifted 0.6 days above target for medical units.",
     impact: "Reduced inpatient capacity during peak admission periods.",

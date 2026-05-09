@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Clock, History, ListChecks, AlertTriangle, ChevronDown } from "lucide-react";
-import { logSignalAction, useSignals, type SignalRecord, type SignalStatus } from "@/lib/signals-data";
+import { logSignalAction, PRIORITY_DOT, useSignals, type SignalRecord, type SignalStatus } from "@/lib/signals-data";
 import { KPI_CATALOG } from "@/lib/kpi-catalog";
 import { useUserProfile, roleLabel } from "@/lib/user-profile";
 
@@ -58,7 +58,7 @@ export function SignalDetailModal({
       <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <span className={`inline-block h-2.5 w-2.5 rounded-full ${signal.dot}`} />
+            <span className={`inline-block h-2.5 w-2.5 rounded-full ${PRIORITY_DOT[signal.priority]}`} />
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Priority {signal.priority} · {kpi?.label ?? signal.metricSlug}
             </span>
