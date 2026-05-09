@@ -3,11 +3,12 @@ import { ArrowRight, Sparkles, Target } from "lucide-react";
 import { roleLabel, ROLES } from "@/features/profile/data/user-profile";
 import { useRequireRole } from "@/features/profile/hooks/use-require-role";
 import {
-  KPI_CATALOG,
   formatTarget,
   formatValue,
   signedDeviationPct,
   statusFor,
+  useKpis,
+  type Kpi,
 } from "@/features/kpis/data/kpi-catalog";
 
 export const Route = createFileRoute("/welcome")({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/welcome")({
 function WelcomePage() {
   const navigate = useNavigate();
   const { hydrated, profile } = useRequireRole();
+  const { data: kpis = [] } = useKpis();
 
   if (!hydrated || !profile.role) {
     return <div className="min-h-screen bg-background" />;
@@ -27,8 +29,8 @@ function WelcomePage() {
 
   const roleConfig = ROLES.find((r) => r.id === profile.role)!;
   const focusKpis = roleConfig.focusSlugs
-    .map((slug) => KPI_CATALOG.find((k) => k.slug === slug))
-    .filter(Boolean) as typeof KPI_CATALOG;
+    .map((slug) => kpis.find((k: Kpi) => k.slug === slug))
+    .filter((k): k is Kpi => Boolean(k));
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10">
@@ -67,7 +69,7 @@ function WelcomePage() {
           </div>
 
           <ol className="space-y-3">
-            {focusKpis.map((k, i) => {
+            {focusKpis.map((k: Kpi, i: number) => {
               const status = statusFor(k);
               const dev = signedDeviationPct(k);
               const dot =

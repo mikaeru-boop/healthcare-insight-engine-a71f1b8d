@@ -85,7 +85,9 @@ function OperationsDashboardPage() {
       )[0];
   }, [activeSlug, kpis, visibleSignals]);
 
-  const activeSignal = visibleSignals.find((s) => s.metricSlug === activeKpi.slug);
+  const activeSignal = activeKpi
+    ? visibleSignals.find((s) => s.metricSlug === activeKpi.slug)
+    : undefined;
 
   return (
     <div className="min-h-screen bg-background">
@@ -96,9 +98,13 @@ function OperationsDashboardPage() {
         />
 
         <div className="grid gap-5 lg:[grid-template-columns:22%_minmax(0,1fr)_30%]">
-          {loading ? <KpiStackSkeleton /> : <KpiStack activeSlug={activeKpi.slug} onSelect={setActiveSlug} />}
-          <MetricDetailCard kpi={activeKpi} signal={activeSignal} />
-          {loading ? (
+          {loading || !activeKpi ? (
+            <KpiStackSkeleton />
+          ) : (
+            <KpiStack activeSlug={activeKpi.slug} onSelect={setActiveSlug} />
+          )}
+          {activeKpi && <MetricDetailCard kpi={activeKpi} signal={activeSignal} />}
+          {loading || !activeKpi ? (
             <PrioritySignalPanelSkeleton />
           ) : (
             <PrioritySignalPanel
