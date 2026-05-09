@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import {
   Area,
   ComposedChart,
@@ -11,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Sparkles, AlertCircle, User } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import {
   KPI_CATALOG,
   formatTarget,
@@ -22,8 +21,14 @@ import {
   type Kpi,
   type Status,
 } from "@/lib/kpi-catalog";
-import { getRecommendations } from "@/server/recommendations.functions";
-import type { Signal } from "@/server/recommendations.functions";
+import {
+  activeSignals,
+  inProgressSignals,
+  type SignalRecord,
+} from "@/lib/signals-data";
+import { TopNav } from "@/components/top-nav";
+import { SignalDetailModal } from "@/components/signal-detail-modal";
+import { useHydrated, useUserProfile } from "@/lib/user-profile";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -40,45 +45,29 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
-  const callRecs = useServerFn(getRecommendations);
-  const [signals, setSignals] = useState<Signal[] | null>(null);
-  const [recError, setRecError] = useState<string | null>(null);
-  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
-  const [activeSlug, setActiveSlug] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const profile = useUserProfile();
+  const hydrated = useHydrated();
 
-  // Fire AI call on load.
+  // Visible signals on dashboard = active + in-progress, sorted by priority.
+  const visibleSignals = useMemo(
+    () =>
+      [...activeSignals(), ...inProgressSignals()].sort(
+        (a, b) => a.priority - b.priority,
+      ),
+    [],
+  );
+
+  const [activeSlug, setActiveSlug] = useState<string>(
+    visibleSignals[0]?.metricSlug ?? KPI_CATALOG[0].slug,
+  );
+  const [openSignal, setOpenSignal] = useState<SignalRecord | null>(null);
+
   useEffect(() => {
-    let cancelled = false;
-    const payload = {
-      kpis: KPI_CATALOG.map((k) => ({
-        slug: k.slug,
-        label: k.label,
-        current: k.current,
-        target: k.target,
-        unit: k.unit,
-        better: k.better,
-        deviationPct: Math.round(Math.abs(signedDeviationPct(k))),
-        status: statusFor(k),
-      })),
-    };
-    callRecs({ data: payload })
-      .then((res) => {
-        if (cancelled) return;
-        if (res.error) {
-          setRecError(res.error);
-          return;
-        }
-        setSignals(res.signals);
-        setGeneratedAt(res.generatedAt);
-        if (res.signals[0]) setActiveSlug(res.signals[0].metricSlug);
-      })
-      .catch((e) => {
-        if (!cancelled) setRecError(e instanceof Error ? e.message : "Failed");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [callRecs]);
+    if (hydrated && !profile.role) {
+      navigate({ to: "/role-select" });
+    }
+  }, [hydrated, profile.role, navigate]);
 
   const activeKpi = useMemo<Kpi>(() => {
     return (
@@ -89,47 +78,33 @@ function Dashboard() {
     );
   }, [activeSlug]);
 
-  const activeSignal = signals?.find((s) => s.metricSlug === activeKpi.slug);
+  const activeSignal = visibleSignals.find((s) => s.metricSlug === activeKpi.slug);
 
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-[1480px] px-6 py-6">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-[28px] font-semibold tracking-tight text-foreground">
-              Operations Dashboard
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              High-signal KPIs and AI-ranked priorities for today.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15">
-              <Sparkles className="h-3.5 w-3.5" />
-              Refresh insights
-            </button>
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground shadow-sm">
-              <User className="h-4 w-4" />
-            </div>
-          </div>
-        </header>
+        <TopNav
+          title="Operations Dashboard"
+          subtitle="High-signal KPIs and AI-ranked priorities for today."
+        />
 
-        {/* 3-column grid: 20 / 50 / 30 */}
         <div className="grid gap-5 lg:[grid-template-columns:22%_minmax(0,1fr)_30%]">
-          <KpiStack
-            activeSlug={activeKpi.slug}
-            onSelect={(slug) => setActiveSlug(slug)}
-          />
+          <KpiStack activeSlug={activeKpi.slug} onSelect={setActiveSlug} />
           <MetricDetail kpi={activeKpi} signal={activeSignal} />
           <AiPanel
-            signals={signals}
-            error={recError}
-            generatedAt={generatedAt}
+            signals={visibleSignals}
             activeSlug={activeKpi.slug}
             onSelectSignal={(slug) => setActiveSlug(slug)}
+            onOpenSignal={(s) => setOpenSignal(s)}
           />
         </div>
       </div>
+
+      <SignalDetailModal
+        signal={openSignal}
+        open={openSignal !== null}
+        onOpenChange={(v) => !v && setOpenSignal(null)}
+      />
     </div>
   );
 }
@@ -196,12 +171,16 @@ function StatusDot({ status }: { status: Status }) {
 
 /* ---------- Center: metric detail ---------- */
 
-function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined }) {
+function MetricDetail({
+  kpi,
+  signal,
+}: {
+  kpi: Kpi;
+  signal: SignalRecord | undefined;
+}) {
   const trend = useMemo(() => trendFor(kpi), [kpi]);
   const dev = signedDeviationPct(kpi);
   const devLabel = `${dev > 0 ? "+" : ""}${dev.toFixed(1)}%`;
-  const isBad =
-    (kpi.better === "higher" && dev < 0) || (kpi.better === "lower" && dev > 0);
 
   const { yDomain, yTicks } = useMemo(() => {
     if (kpi.unit === "%") {
@@ -209,12 +188,11 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
     }
     const values = trend.map((d) => d.value);
     const rawMax = Math.max(kpi.target, kpi.current, ...values) * 1.25;
-    const rawMin = 0;
     const pow = Math.pow(10, Math.max(0, Math.floor(Math.log10(rawMax)) - 1));
     const step = Math.ceil(rawMax / 5 / pow) * pow;
     const max = step * 5;
     return {
-      yDomain: [rawMin, max] as [number, number],
+      yDomain: [0, max] as [number, number],
       yTicks: [0, step, step * 2, step * 3, step * 4, step * 5],
     };
   }, [kpi, trend]);
@@ -224,7 +202,7 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Signal 1 · Metric detail
+            Metric detail
           </p>
           <h2 className="mt-1 text-xl font-semibold text-foreground">{kpi.label}</h2>
         </div>
@@ -239,13 +217,7 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
           </div>
           <div>
             <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Deviation</p>
-            <p
-              className={`text-lg font-semibold ${
-                isBad ? "text-foreground" : "text-foreground"
-              }`}
-            >
-              {devLabel}
-            </p>
+            <p className="text-lg font-semibold text-foreground">{devLabel}</p>
           </div>
         </div>
       </div>
@@ -321,10 +293,7 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
       <div className="mt-4 border-t border-border pt-3">
         <p className="text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">Flagged by AI:</span>{" "}
-          {signal?.signal ??
-            (kpi.slug === "discharge-before-noon"
-              ? "Discharge Before Noon has remained more than 40% below target for 30 consecutive days."
-              : null)}
+          {signal?.signal ?? "No active signal for this metric."}
         </p>
       </div>
     </div>
@@ -335,52 +304,15 @@ function MetricDetail({ kpi, signal }: { kpi: Kpi; signal: Signal | undefined })
 
 function AiPanel({
   signals,
-  error,
-  generatedAt,
   activeSlug,
   onSelectSignal,
+  onOpenSignal,
 }: {
-  signals: Signal[] | null;
-  error: string | null;
-  generatedAt: string | null;
+  signals: SignalRecord[];
   activeSlug: string;
   onSelectSignal: (slug: string) => void;
+  onOpenSignal: (s: SignalRecord) => void;
 }) {
-  const mockSignals = [
-    {
-      priority: 1,
-      slug: "discharge-before-noon",
-      dot: "bg-red-500",
-      signal:
-        "Discharge Before Noon is 43.6% below target and has not improved in 30 days.",
-      impact:
-        "Afternoon bed pressure is increasing, raising ED boarding risk across the facility.",
-      nextAction:
-        "Pull late discharge data by attending physician and schedule a review with case management this week.",
-    },
-    {
-      priority: 2,
-      slug: "cost-per-case",
-      dot: "bg-orange-500",
-      signal: "Cost per Case is 23% above the $12,000 target.",
-      impact:
-        "At current volume, this gap represents unplanned spend that compounds each week without intervention.",
-      nextAction:
-        "Pull case-level cost breakdown for the top 3 service lines before the next ops review.",
-    },
-    {
-      priority: 3,
-      slug: "or-throughput",
-      dot: "bg-yellow-400",
-      signal:
-        "OR Throughput is down 18% from the prior 30-day period at 4.1 cases per day against a target of 5.",
-      impact:
-        "Each case lost per day reduces weekly OR revenue and increases scheduling backlog.",
-      nextAction:
-        "Review first-case start time logs for the past 4 weeks and flag rooms with more than 3 late starts.",
-    },
-  ];
-
   return (
     <aside className="dark rounded-2xl border border-border bg-[oklch(0.18_0.03_270)] p-5 text-foreground shadow-[0_8px_24px_-8px_rgba(16,24,40,0.25)]">
       <div className="mb-1 flex items-center gap-2 text-primary">
@@ -392,12 +324,15 @@ function AiPanel({
       </p>
 
       <ul className="space-y-3">
-        {mockSignals.map((s) => {
-          const active = s.slug === activeSlug;
+        {signals.map((s) => {
+          const active = s.metricSlug === activeSlug;
           return (
-            <li key={s.priority}>
+            <li key={s.id}>
               <button
-                onClick={() => onSelectSignal(s.slug)}
+                onClick={() => {
+                  onSelectSignal(s.metricSlug);
+                  onOpenSignal(s);
+                }}
                 className={`w-full rounded-xl border bg-card/40 p-4 text-left transition-all ${
                   active
                     ? "border-primary/60 bg-card/60 shadow-[0_2px_6px_rgba(91,73,232,0.25)]"
@@ -423,22 +358,6 @@ function AiPanel({
         })}
       </ul>
     </aside>
-  );
-}
-
-function SignalSkeletons() {
-  return (
-    <div className="space-y-2.5">
-      <p className="text-xs text-muted-foreground">Analyzing data…</p>
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="animate-pulse rounded-xl border border-border bg-card p-4">
-          <div className="h-4 w-16 rounded bg-muted" />
-          <div className="mt-3 h-3 w-full rounded bg-muted" />
-          <div className="mt-2 h-3 w-5/6 rounded bg-muted" />
-          <div className="mt-2 h-3 w-3/4 rounded bg-muted" />
-        </div>
-      ))}
-    </div>
   );
 }
 

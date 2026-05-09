@@ -9,10 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WelcomeRouteImport } from './routes/welcome'
+import { Route as RoleSelectRouteImport } from './routes/role-select'
 import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicRecommendRouteImport } from './routes/api/public/recommend'
 
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoleSelectRoute = RoleSelectRouteImport.update({
+  id: '/role-select',
+  path: '/role-select',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RecommendationsRoute = RecommendationsRouteImport.update({
   id: '/recommendations',
   path: '/recommendations',
@@ -32,35 +44,73 @@ const ApiPublicRecommendRoute = ApiPublicRecommendRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/recommendations': typeof RecommendationsRoute
+  '/role-select': typeof RoleSelectRoute
+  '/welcome': typeof WelcomeRoute
   '/api/public/recommend': typeof ApiPublicRecommendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/recommendations': typeof RecommendationsRoute
+  '/role-select': typeof RoleSelectRoute
+  '/welcome': typeof WelcomeRoute
   '/api/public/recommend': typeof ApiPublicRecommendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/recommendations': typeof RecommendationsRoute
+  '/role-select': typeof RoleSelectRoute
+  '/welcome': typeof WelcomeRoute
   '/api/public/recommend': typeof ApiPublicRecommendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/recommendations' | '/api/public/recommend'
+  fullPaths:
+    | '/'
+    | '/recommendations'
+    | '/role-select'
+    | '/welcome'
+    | '/api/public/recommend'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/recommendations' | '/api/public/recommend'
-  id: '__root__' | '/' | '/recommendations' | '/api/public/recommend'
+  to:
+    | '/'
+    | '/recommendations'
+    | '/role-select'
+    | '/welcome'
+    | '/api/public/recommend'
+  id:
+    | '__root__'
+    | '/'
+    | '/recommendations'
+    | '/role-select'
+    | '/welcome'
+    | '/api/public/recommend'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RecommendationsRoute: typeof RecommendationsRoute
+  RoleSelectRoute: typeof RoleSelectRoute
+  WelcomeRoute: typeof WelcomeRoute
   ApiPublicRecommendRoute: typeof ApiPublicRecommendRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/role-select': {
+      id: '/role-select'
+      path: '/role-select'
+      fullPath: '/role-select'
+      preLoaderRoute: typeof RoleSelectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/recommendations': {
       id: '/recommendations'
       path: '/recommendations'
@@ -88,6 +138,8 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RecommendationsRoute: RecommendationsRoute,
+  RoleSelectRoute: RoleSelectRoute,
+  WelcomeRoute: WelcomeRoute,
   ApiPublicRecommendRoute: ApiPublicRecommendRoute,
 }
 export const routeTree = rootRouteImport

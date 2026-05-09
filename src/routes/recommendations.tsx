@@ -1,304 +1,166 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Plus, Trash2, Sparkles, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { KPI_CATALOG, statusFor, type Kpi } from "@/lib/kpi-catalog";
-
-const isOffTarget = (k: Kpi) => statusFor(k) !== "green";
-
-type SearchParams = { focus?: string };
+import { useMemo, useState } from "react";
+import { Sparkles, AlertCircle, Clock, CheckCircle2, ChevronRight } from "lucide-react";
+import { TopNav } from "@/components/top-nav";
+import { SignalDetailModal } from "@/components/signal-detail-modal";
+import {
+  activeSignals,
+  inProgressSignals,
+  resolvedSignals,
+  type SignalRecord,
+} from "@/lib/signals-data";
+import { KPI_CATALOG } from "@/lib/kpi-catalog";
 
 export const Route = createFileRoute("/recommendations")({
-  component: Index,
-  validateSearch: (search: Record<string, unknown>): SearchParams => {
-    const focus = typeof search.focus === "string" ? search.focus : undefined;
-    return focus ? { focus } : {};
-  },
+  component: RecommendationsPage,
   head: () => ({
     meta: [
       { title: "Recommendations — Healthcare Ops Advisor" },
       {
         name: "description",
         content:
-          "Turn cost, utilization, and throughput KPIs into prioritized executive recommendations.",
+          "Active, in-progress, and resolved operational signals with full action history.",
       },
     ],
   }),
 });
 
-function kpiToRow(k: Kpi): MetricRow {
-  return {
-    id: crypto.randomUUID(),
-    name: k.label,
-    current: String(k.current),
-    target: String(k.target),
-    unit: k.unit,
-  };
-}
+type TabId = "active" | "in-progress" | "resolved";
 
-function rowsFromFocus(focus: string | undefined): MetricRow[] | null {
-  if (!focus) return null;
-  if (focus === "off-target") {
-    const off = KPI_CATALOG.filter(isOffTarget);
-    if (off.length === 0) return null;
-    const rows = off.map(kpiToRow);
-    return rows.length === 1 ? [...rows, newRow()] : rows;
-  }
-  const match = KPI_CATALOG.find((k) => k.slug === focus);
-  if (!match) return null;
-  return [kpiToRow(match), newRow()];
-}
+function RecommendationsPage() {
+  const [tab, setTab] = useState<TabId>("active");
+  const [openSignal, setOpenSignal] = useState<SignalRecord | null>(null);
 
-type MetricRow = {
-  id: string;
-  name: string;
-  current: string;
-  target: string;
-  unit: string;
-};
-
-const newRow = (): MetricRow => ({
-  id: crypto.randomUUID(),
-  name: "",
-  current: "",
-  target: "",
-  unit: "",
-});
-
-const SAMPLE: MetricRow[] = [
-  { id: crypto.randomUUID(), name: "OR Utilization", current: "68", target: "82", unit: "%" },
-  { id: crypto.randomUUID(), name: "Avg Length of Stay", current: "5.4", target: "4.2", unit: "days" },
-  { id: crypto.randomUUID(), name: "Cost per Discharge", current: "12450", target: "10800", unit: "USD" },
-  { id: crypto.randomUUID(), name: "ED Throughput", current: "2.1", target: "3.0", unit: "pts/hr" },
-];
-
-function Index() {
-  const { focus } = Route.useSearch();
-  const [timePeriod, setTimePeriod] = useState("Q3 2026");
-  const [metrics, setMetrics] = useState<MetricRow[]>(
-    () => rowsFromFocus(focus) ?? [newRow(), newRow()],
+  const groups = useMemo(
+    () => ({
+      active: activeSignals(),
+      "in-progress": inProgressSignals(),
+      resolved: resolvedSignals(),
+    }),
+    [],
   );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(null);
 
-  const updateMetric = (id: string, field: keyof MetricRow, value: string) => {
-    setMetrics((prev) => prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
-  };
-
-  const addRow = () => setMetrics((prev) => [...prev, newRow()]);
-  const removeRow = (id: string) =>
-    setMetrics((prev) => (prev.length <= 2 ? prev : prev.filter((m) => m.id !== id)));
-
-  const loadSample = () => {
-    setMetrics(SAMPLE.map((m) => ({ ...m, id: crypto.randomUUID() })));
-    setTimePeriod("Q3 2026");
-    setError(null);
-    setResult(null);
-  };
-
-  const validate = (): { ok: true; payload: { timePeriod: string; metrics: { name: string; current: number; target: number; unit?: string }[] } } | { ok: false; error: string } => {
-    if (!timePeriod.trim()) return { ok: false, error: "Time period is required." };
-    const filled = metrics.filter(
-      (m) => m.name.trim() !== "" || m.current !== "" || m.target !== "",
-    );
-    if (filled.length < 2) return { ok: false, error: "Provide at least 2 metrics with current values and targets." };
-
-    const out: { name: string; current: number; target: number; unit?: string }[] = [];
-    for (const m of filled) {
-      if (!m.name.trim()) return { ok: false, error: "Every metric needs a name." };
-      if (m.current === "" || m.target === "") {
-        return { ok: false, error: `Metric "${m.name}" is missing current value or target.` };
-      }
-      const c = Number(m.current);
-      const t = Number(m.target);
-      if (!Number.isFinite(c)) return { ok: false, error: `Metric "${m.name}" current value must be a number.` };
-      if (!Number.isFinite(t)) return { ok: false, error: `Metric "${m.name}" target must be a number.` };
-      out.push({ name: m.name.trim(), current: c, target: t, unit: m.unit.trim() || undefined });
-    }
-    return { ok: true, payload: { timePeriod: timePeriod.trim(), metrics: out } };
-  };
-
-  const submit = async () => {
-    setError(null);
-    setResult(null);
-    const v = validate();
-    if (!v.ok) {
-      setError(v.error);
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch("/api/public/recommend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(v.payload),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data?.error ?? "Request failed.");
-      } else {
-        setResult(data.result);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Network error.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const tabs: { id: TabId; label: string; icon: React.ReactNode; count: number }[] = [
+    { id: "active", label: "Active", icon: <AlertCircle className="h-3.5 w-3.5" />, count: groups.active.length },
+    { id: "in-progress", label: "In progress", icon: <Clock className="h-3.5 w-3.5" />, count: groups["in-progress"].length },
+    { id: "resolved", label: "Resolved", icon: <CheckCircle2 className="h-3.5 w-3.5" />, count: groups.resolved.length },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-5xl px-6 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Recommendations
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            KPI-driven recommendations for cost, utilization, and throughput.
-          </p>
+      <div className="mx-auto max-w-5xl px-6 py-6">
+        <TopNav
+          title="Recommendations"
+          subtitle="Every signal raised by the Ops Advisor — past and present."
+        />
+
+        <div className="mb-5 inline-flex rounded-xl border border-border bg-card p-1">
+          {tabs.map((t) => {
+            const active = t.id === tab;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t.icon}
+                {t.label}
+                <span
+                  className={`ml-1 rounded-full px-1.5 text-[10px] ${
+                    active ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {t.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <Card>
-          <CardHeader>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <CardTitle>Operational KPIs</CardTitle>
-                <CardDescription>
-                  Enter at least 2 metrics with current values and targets. Numeric only.
-                </CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={loadSample}>
-                Load sample
-              </Button>
+
+        <div className="space-y-3">
+          {groups[tab].length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center">
+              <p className="text-sm text-muted-foreground">No signals in this state.</p>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-2 sm:max-w-xs">
-              <Label htmlFor="period">Time period</Label>
-              <Input
-                id="period"
-                placeholder="e.g. Q3 2026"
-                value={timePeriod}
-                onChange={(e) => setTimePeriod(e.target.value)}
+          ) : (
+            groups[tab].map((s) => (
+              <SignalCard
+                key={s.id}
+                signal={s}
+                onOpen={() => setOpenSignal(s)}
               />
-            </div>
+            ))
+          )}
+        </div>
+      </div>
 
-            <div className="space-y-3">
-              <div className="hidden grid-cols-12 gap-3 px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid">
-                <div className="col-span-4">Metric</div>
-                <div className="col-span-3">Current</div>
-                <div className="col-span-3">Target</div>
-                <div className="col-span-1">Unit</div>
-                <div className="col-span-1" />
-              </div>
+      <SignalDetailModal
+        signal={openSignal}
+        open={openSignal !== null}
+        onOpenChange={(v) => !v && setOpenSignal(null)}
+      />
+    </div>
+  );
+}
 
-              {metrics.map((m, idx) => (
-                <div key={m.id} className="grid grid-cols-12 gap-3">
-                  <Input
-                    className="col-span-12 sm:col-span-4"
-                    placeholder={`Metric ${idx + 1} name`}
-                    value={m.name}
-                    onChange={(e) => updateMetric(m.id, "name", e.target.value)}
-                  />
-                  <Input
-                    className="col-span-6 sm:col-span-3"
-                    type="number"
-                    placeholder="Current"
-                    value={m.current}
-                    onChange={(e) => updateMetric(m.id, "current", e.target.value)}
-                  />
-                  <Input
-                    className="col-span-6 sm:col-span-3"
-                    type="number"
-                    placeholder="Target"
-                    value={m.target}
-                    onChange={(e) => updateMetric(m.id, "target", e.target.value)}
-                  />
-                  <Input
-                    className="col-span-10 sm:col-span-1"
-                    placeholder="Unit"
-                    value={m.unit}
-                    onChange={(e) => updateMetric(m.id, "unit", e.target.value)}
-                  />
-                  <div className="col-span-2 flex items-center justify-end sm:col-span-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeRow(m.id)}
-                      disabled={metrics.length <= 2}
-                      aria-label="Remove metric"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+function SignalCard({ signal, onOpen }: { signal: SignalRecord; onOpen: () => void }) {
+  const kpi = KPI_CATALOG.find((k) => k.slug === signal.metricSlug);
+  const lastAction = signal.actionLog[signal.actionLog.length - 1];
 
-              <Button variant="outline" size="sm" onClick={addRow}>
-                <Plus className="mr-1 h-4 w-4" />
-                Add metric
-              </Button>
-            </div>
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-5 text-left transition-colors hover:border-primary/40"
+    >
+      <div className="mt-1 flex flex-col items-center gap-1">
+        <span className={`inline-block h-3 w-3 rounded-full ${signal.dot}`} />
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          P{signal.priority}
+        </span>
+      </div>
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Cannot generate</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline gap-x-2">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            {kpi?.label ?? signal.metricSlug}
+          </span>
+          {signal.status === "resolved" && signal.history.length > 0 && (
+            <span className="text-[10px] text-muted-foreground">
+              · {signal.history.length} prior instance{signal.history.length === 1 ? "" : "s"} on record
+            </span>
+          )}
+        </div>
+        <p className="mt-1 text-sm font-medium text-foreground">{signal.signal}</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">{signal.impact}</p>
 
-            <div className="flex items-center gap-3">
-              <Button onClick={submit} disabled={loading}>
-                <Sparkles className="mr-2 h-4 w-4" />
-                {loading ? "Analyzing…" : "Generate recommendations"}
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                Validation runs before any AI call.
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {result && (
-          <Card className="mt-6">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CardTitle>Recommendations</CardTitle>
-                <Badge variant="secondary">{timePeriod}</Badge>
-              </div>
-              <CardDescription>Prioritized by potential impact.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ol className="space-y-3">
-                {result
-                  .split("\n")
-                  .map((l) => l.trim())
-                  .filter((l) => /^\d+\./.test(l))
-                  .map((line, i) => {
-                    const text = line.replace(/^\d+\.\s*/, "");
-                    return (
-                      <li key={i} className="flex gap-3 rounded-md border border-border bg-card p-4">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                          {i + 1}
-                        </div>
-                        <p className="text-sm leading-relaxed text-foreground">{text}</p>
-                      </li>
-                    );
-                  })}
-              </ol>
-              {!/^\d+\./m.test(result) && (
-                <p className="text-sm text-muted-foreground">{result}</p>
-              )}
-            </CardContent>
-          </Card>
+        {signal.status === "in-progress" && lastAction && (
+          <p className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            Last action <span className="text-foreground">{lastAction.timestamp}</span> ·{" "}
+            {lastAction.actor} ({lastAction.role})
+          </p>
+        )}
+        {signal.status === "active" && (
+          <p className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Sparkles className="h-3 w-3" />
+            Detected <span className="text-foreground">{signal.detectedAt}</span> · No action logged
+          </p>
+        )}
+        {signal.status === "resolved" && (
+          <p className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+            {signal.history[signal.history.length - 1]?.outcome ?? "Resolved."}
+          </p>
         )}
       </div>
-    </div>
-  )
+
+      <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+    </button>
+  );
 }
