@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { ArrowRight, Sparkles, Target } from "lucide-react";
 import { roleLabel, ROLES, useUserProfile, useHydrated } from "@/lib/user-profile";
+import { useRequireRole } from "@/hooks/use-require-role";
 import {
   KPI_CATALOG,
   formatTarget,
@@ -21,12 +21,7 @@ function WelcomePage() {
   const navigate = useNavigate();
   const profile = useUserProfile();
   const hydrated = useHydrated();
-
-  useEffect(() => {
-    if (hydrated && !profile.role) {
-      navigate({ to: "/role-select" });
-    }
-  }, [hydrated, profile.role, navigate]);
+  useRequireRole();
 
   if (!hydrated || !profile.role) {
     return <div className="min-h-screen bg-background" />;
