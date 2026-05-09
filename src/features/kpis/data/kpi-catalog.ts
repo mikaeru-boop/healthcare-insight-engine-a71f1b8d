@@ -8,6 +8,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+/**
+ * Pure data + pure helpers for the six operational KPIs.
+ * No React, no styling — display lives in features/kpis/components.
+ */
+
 export type Kpi = {
   slug: string;
   label: string;

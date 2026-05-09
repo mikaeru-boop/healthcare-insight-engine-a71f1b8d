@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { Sparkles, User } from "lucide-react";
-import { roleLabel, useUserProfile } from "@/lib/user-profile";
-import { ProfileModal } from "@/components/profile-modal";
+import { roleLabel, useUserProfile } from "@/features/profile/data/user-profile";
+import { ProfileModal } from "@/features/profile/components/profile-modal";
 
+/**
+ * Page header used by the Operations Dashboard and Priority Tracker.
+ * Renders title, optional subtitle, "Refresh insights" affordance, and
+ * the profile chip that opens the ProfileModal.
+ */
 export function TopNav({
   title,
   subtitle,

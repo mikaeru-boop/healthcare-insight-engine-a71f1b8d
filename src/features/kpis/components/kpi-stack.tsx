@@ -4,8 +4,12 @@ import {
   formatValue,
   statusFor,
   type Status,
-} from "@/lib/kpi-catalog";
+} from "@/features/kpis/data/kpi-catalog";
 
+/**
+ * Left column of the dashboard: scannable list of all KPIs with status dots.
+ * Selecting a tile sets the active metric for the center MetricDetailCard.
+ */
 export function KpiStack({
   activeSlug,
   onSelect,

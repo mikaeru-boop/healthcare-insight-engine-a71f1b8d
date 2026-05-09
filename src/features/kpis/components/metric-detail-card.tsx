@@ -15,10 +15,14 @@ import {
   signedDeviationPct,
   trendFor,
   type Kpi,
-} from "@/lib/kpi-catalog";
-import type { SignalRecord } from "@/lib/signals-data";
+} from "@/features/kpis/data/kpi-catalog";
+import type { SignalRecord } from "@/features/signals/data/signals-store";
 
-export function MetricDetail({
+/**
+ * Center column of the dashboard: full detail for the active KPI —
+ * current vs. target, signed deviation, 30-day trend, and the AI signal headline.
+ */
+export function MetricDetailCard({
   kpi,
   signal,
 }: {

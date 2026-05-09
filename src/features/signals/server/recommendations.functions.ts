@@ -1,6 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+/**
+ * Server function that asks the Lovable AI Gateway to emit up to 3
+ * prioritized operational signals for the supplied off-target KPIs.
+ * Output is enforced via a forced tool call, so no free-form parsing.
+ */
+
 const KpiInput = z.object({
   slug: z.string(),
   label: z.string(),

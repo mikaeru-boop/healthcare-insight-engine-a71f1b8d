@@ -1,7 +1,12 @@
 import { Sparkles } from "lucide-react";
-import { PRIORITY_DOT, type SignalRecord } from "@/lib/signals-data";
+import { PRIORITY_DOT, type SignalRecord } from "@/features/signals/data/signals-store";
 
-export function AiPanel({
+/**
+ * Right column of the dashboard ("Where to focus today").
+ * Dark-surface anchor that lists active + in-progress signals sorted by priority.
+ * Per PRD: this is the visual anchor that tells a new user where to look first.
+ */
+export function PrioritySignalPanel({
   signals,
   activeSlug,
   onSignalClick,

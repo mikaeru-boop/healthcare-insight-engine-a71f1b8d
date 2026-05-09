@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Pencil, User as UserIcon, Mail, Building2, BadgeCheck } from "lucide-react";
-import { roleLabel, setProfile, useUserProfile, type Role } from "@/lib/user-profile";
-import { RolePicker } from "@/components/role-picker";
+import {
+  roleLabel,
+  setProfile,
+  useUserProfile,
+  type Role,
+} from "@/features/profile/data/user-profile";
+import { RolePicker } from "@/features/profile/components/role-picker";
 
 export function ProfileModal({
   open,

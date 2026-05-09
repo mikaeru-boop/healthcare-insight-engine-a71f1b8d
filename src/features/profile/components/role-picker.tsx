@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Building2, ChevronRight } from "lucide-react";
-import { ROLES, DEPARTMENTS, type Role } from "@/lib/user-profile";
+import { ROLES, DEPARTMENTS, type Role } from "@/features/profile/data/user-profile";
 
 export function RolePicker({
   initialRole,

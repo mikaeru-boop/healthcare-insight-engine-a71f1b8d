@@ -1,5 +1,11 @@
 import { useSyncExternalStore } from "react";
 
+/**
+ * Reactive signal store.
+ * Pure data + a useSyncExternalStore-backed hook so any UI that reads
+ * signals stays in sync when the modal logs an action.
+ */
+
 export type SignalStatus = "active" | "in-progress" | "resolved" | "escalated";
 
 export type ActionLogEntry = {
@@ -33,7 +39,6 @@ export const PRIORITY_DOT: Record<number, string> = {
   2: "bg-orange-500",
   3: "bg-yellow-400",
 };
-
 
 export const SIGNALS: SignalRecord[] = [
   {

@@ -1,9 +1,21 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Clock, History, ListChecks, AlertTriangle, ChevronDown } from "lucide-react";
-import { logSignalAction, PRIORITY_DOT, useSignals, type SignalRecord, type SignalStatus } from "@/lib/signals-data";
-import { KPI_CATALOG } from "@/lib/kpi-catalog";
-import { useUserProfile, roleLabel } from "@/lib/user-profile";
+import {
+  logSignalAction,
+  PRIORITY_DOT,
+  useSignals,
+  type SignalRecord,
+  type SignalStatus,
+} from "@/features/signals/data/signals-store";
+import { KPI_CATALOG } from "@/features/kpis/data/kpi-catalog";
+import { useUserProfile, roleLabel } from "@/features/profile/data/user-profile";
+
+/**
+ * Full-detail view of a signal: header, impact, recommended action,
+ * Log Action dropdown, signal history chain, and full action log.
+ * Mounted from both the dashboard right panel and the Priority Tracker.
+ */
 
 const STATUS_BADGE: Record<SignalStatus, string> = {
   active: "bg-red-500/15 text-red-400 border-red-500/30",
