@@ -17,7 +17,7 @@ import { useHydrated, useUserProfile } from "@/lib/user-profile";
 import { useRequireRole } from "@/hooks/use-require-role";
 import { KpiStack } from "@/components/dashboard/kpi-stack";
 import { MetricDetail } from "@/components/dashboard/metric-detail";
-import { AiPanel, AiPanelError } from "@/components/dashboard/ai-panel";
+import { AiPanel } from "@/components/dashboard/ai-panel";
 import { KpiStackSkeleton, AiPanelSkeleton } from "@/components/dashboard/panel-skeletons";
 
 export const Route = createFileRoute("/")({
