@@ -188,3 +188,19 @@ function EmptyState({ tab }: { tab: TabId }) {
     </div>
   );
 }
+
+function StatusBadge({ status }: { status: SignalRecord["status"] }) {
+  const map: Record<SignalRecord["status"], string> = {
+    active: "bg-red-500/15 text-red-500 border-red-500/30",
+    "in-progress": "bg-amber-500/15 text-amber-600 border-amber-500/30",
+    escalated: "bg-orange-500/15 text-orange-600 border-orange-500/30",
+    resolved: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
+  };
+  return (
+    <span
+      className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${map[status]}`}
+    >
+      {status.replace("-", " ")}
+    </span>
+  );
+}
