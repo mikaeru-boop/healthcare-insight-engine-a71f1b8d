@@ -22,7 +22,6 @@ import {
   type Status,
 } from "@/lib/kpi-catalog";
 import {
-  SIGNALS,
   activeSignals,
   inProgressSignals,
   type SignalRecord,
