@@ -1,5 +1,5 @@
 import { Sparkles, AlertTriangle } from "lucide-react";
-import type { SignalRecord } from "@/lib/signals-data";
+import { PRIORITY_DOT, type SignalRecord } from "@/lib/signals-data";
 
 export function AiPanel({
   signals,
