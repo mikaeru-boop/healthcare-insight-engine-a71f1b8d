@@ -15,7 +15,7 @@ export const Route = createFileRoute("/recommendations")({
   component: RecommendationsPage,
   head: () => ({
     meta: [
-      { title: "Recommendations — Healthcare Ops Advisor" },
+      { title: "Priority Tracker — Healthcare Ops Advisor" },
       {
         name: "description",
         content:
@@ -50,7 +50,7 @@ function RecommendationsPage() {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-6 py-6">
         <TopNav
-          title="Recommendations"
+          title="Priority Tracker"
           subtitle="Every signal raised by the Ops Advisor — past and present."
         />
 
