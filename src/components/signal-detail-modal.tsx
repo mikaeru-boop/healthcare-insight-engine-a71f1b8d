@@ -1,13 +1,26 @@
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Clock, History, ListChecks, AlertTriangle } from "lucide-react";
+import { Clock, History, ListChecks, AlertTriangle, ChevronDown } from "lucide-react";
 import type { SignalRecord } from "@/lib/signals-data";
 import { KPI_CATALOG } from "@/lib/kpi-catalog";
+import { useUserProfile, roleLabel } from "@/lib/user-profile";
 
-const STATUS_BADGE: Record<SignalRecord["status"], string> = {
+const STATUS_BADGE: Record<SignalRecord["status"] | "escalated", string> = {
   active: "bg-red-500/15 text-red-400 border-red-500/30",
   "in-progress": "bg-amber-500/15 text-amber-400 border-amber-500/30",
   resolved: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  escalated: "bg-orange-500/15 text-orange-400 border-orange-500/30",
 };
+
+type LocalStatus = SignalRecord["status"] | "escalated";
+
+type LogEntry = { timestamp: string; action: string; actor: string; role: string };
+
+const ACTIONS: { id: LocalStatus; label: string; logLabel: string }[] = [
+  { id: "escalated", label: "Mark as Escalated", logLabel: "Escalated" },
+  { id: "in-progress", label: "Mark as In Progress", logLabel: "Marked in progress" },
+  { id: "resolved", label: "Mark as Resolved", logLabel: "Marked resolved" },
+];
 
 export function SignalDetailModal({
   signal,
@@ -18,8 +31,43 @@ export function SignalDetailModal({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const profile = useUserProfile();
+  const [status, setStatus] = useState<LocalStatus>(signal?.status ?? "active");
+  const [extraLog, setExtraLog] = useState<LogEntry[]>([]);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (signal) {
+      setStatus(signal.status);
+      setExtraLog([]);
+      setMenuOpen(false);
+    }
+  }, [signal?.id, signal]);
+
   if (!signal) return null;
   const kpi = KPI_CATALOG.find((k) => k.slug === signal.metricSlug);
+
+  function handleAction(a: (typeof ACTIONS)[number]) {
+    setStatus(a.id);
+    const ts = new Date().toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    setExtraLog((prev) => [
+      ...prev,
+      {
+        timestamp: ts,
+        action: a.logLabel,
+        actor: profile.name,
+        role: roleLabel(profile.role),
+      },
+    ]);
+    setMenuOpen(false);
+  }
+
+  const allLog = [...signal.actionLog, ...extraLog];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -31,9 +79,9 @@ export function SignalDetailModal({
               Priority {signal.priority} · {kpi?.label ?? signal.metricSlug}
             </span>
             <span
-              className={`ml-auto rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${STATUS_BADGE[signal.status]}`}
+              className={`ml-auto rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${STATUS_BADGE[status]}`}
             >
-              {signal.status.replace("-", " ")}
+              {status.replace("-", " ")}
             </span>
           </div>
           <DialogTitle className="pt-1 text-base leading-snug">{signal.signal}</DialogTitle>
@@ -50,6 +98,30 @@ export function SignalDetailModal({
         <Section title="Recommended next action" icon={<ListChecks className="h-3.5 w-3.5" />}>
           <p className="text-sm leading-relaxed text-foreground/90">{signal.nextAction}</p>
         </Section>
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted"
+          >
+            Log Action <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          {menuOpen && (
+            <div className="absolute z-10 mt-1 w-56 overflow-hidden rounded-lg border border-border bg-popover shadow-md">
+              {ACTIONS.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => handleAction(a)}
+                  className="block w-full px-3 py-2 text-left text-xs text-foreground hover:bg-muted"
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <Section title="Signal history chain" icon={<History className="h-3.5 w-3.5" />}>
           {signal.history.length === 0 ? (
@@ -76,7 +148,7 @@ export function SignalDetailModal({
 
         <Section title="Action log" icon={<ListChecks className="h-3.5 w-3.5" />}>
           <ol className="space-y-2">
-            {signal.actionLog.map((a, i) => (
+            {allLog.map((a, i) => (
               <li
                 key={i}
                 className="grid grid-cols-[120px_1fr] gap-3 rounded-lg border border-border bg-card/60 p-3"
