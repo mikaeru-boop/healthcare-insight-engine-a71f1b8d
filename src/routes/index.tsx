@@ -56,7 +56,6 @@ function Dashboard() {
 
   // Loading state for AI panel + KPI stack (also re-runs on role switch)
   const [loading, setLoading] = useState(true);
-  const [signalsError] = useState(false); // wired for failure display
 
   useEffect(() => {
     if (!hydrated) return;
