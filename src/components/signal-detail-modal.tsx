@@ -13,9 +13,9 @@ const STATUS_BADGE: Record<SignalStatus, string> = {
 };
 
 const ACTIONS: { id: SignalStatus; label: string; logLabel: string }[] = [
-  { id: "escalated", label: "Mark as Escalated", logLabel: "Escalated" },
-  { id: "in-progress", label: "Mark as In Progress", logLabel: "Marked in progress" },
-  { id: "resolved", label: "Mark as Resolved", logLabel: "Marked resolved" },
+  { id: "active", label: "Active", logLabel: "Marked active" },
+  { id: "in-progress", label: "In Progress", logLabel: "Marked in progress" },
+  { id: "resolved", label: "Resolved", logLabel: "Marked resolved" },
 ];
 
 export function SignalDetailModal({
