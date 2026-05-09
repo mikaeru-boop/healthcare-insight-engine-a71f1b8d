@@ -49,10 +49,7 @@ function RecommendationsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-6 py-6">
-        <TopNav
-          title="Priority Tracker"
-          subtitle="Every signal raised by the Ops Advisor — past and present."
-        />
+        <TopNav title="Priority Tracker" />
 
         <div className="mb-5 inline-flex rounded-xl border border-border bg-card p-1">
           {tabs.map((t) => {
