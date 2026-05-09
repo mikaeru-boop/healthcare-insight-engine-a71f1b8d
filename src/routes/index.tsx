@@ -14,6 +14,7 @@ import {
 import { TopNav } from "@/components/top-nav";
 import { SignalDetailModal } from "@/components/signal-detail-modal";
 import { useHydrated, useUserProfile } from "@/lib/user-profile";
+import { useRequireRole } from "@/hooks/use-require-role";
 import { KpiStack } from "@/components/dashboard/kpi-stack";
 import { MetricDetail } from "@/components/dashboard/metric-detail";
 import { AiPanel, AiPanelError } from "@/components/dashboard/ai-panel";
