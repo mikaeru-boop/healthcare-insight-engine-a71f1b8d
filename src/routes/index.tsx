@@ -92,8 +92,10 @@ function Dashboard() {
             <AiPanel
               signals={visibleSignals}
               activeSlug={activeKpi.slug}
-              onSelectSignal={(slug) => setActiveSlug(slug)}
-              onOpenSignal={(s) => setOpenSignal(s)}
+              onSignalClick={(signal) => {
+                setActiveSlug(signal.metricSlug);
+                setOpenSignal(signal);
+              }}
             />
           )}
         </div>

@@ -4,13 +4,11 @@ import { PRIORITY_DOT, type SignalRecord } from "@/lib/signals-data";
 export function AiPanel({
   signals,
   activeSlug,
-  onSelectSignal,
-  onOpenSignal,
+  onSignalClick,
 }: {
   signals: SignalRecord[];
   activeSlug: string;
-  onSelectSignal: (slug: string) => void;
-  onOpenSignal: (s: SignalRecord) => void;
+  onSignalClick: (signal: SignalRecord) => void;
 }) {
   return (
     <aside className="dark rounded-2xl border border-border bg-[oklch(0.18_0.03_270)] p-5 text-foreground shadow-[0_8px_24px_-8px_rgba(16,24,40,0.25)]">
@@ -28,10 +26,7 @@ export function AiPanel({
           return (
             <li key={s.id}>
               <button
-                onClick={() => {
-                  onSelectSignal(s.metricSlug);
-                  onOpenSignal(s);
-                }}
+                onClick={() => onSignalClick(s)}
                 className={`w-full rounded-xl border bg-card/40 p-5 text-left transition-all ${
                   active
                     ? "border-primary/60 bg-card/60 shadow-[0_2px_6px_rgba(91,73,232,0.25)]"
