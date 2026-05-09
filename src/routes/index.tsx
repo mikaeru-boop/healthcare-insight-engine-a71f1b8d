@@ -422,14 +422,6 @@ function AiPanel({
           );
         })}
       </ul>
-
-      <button
-        onClick={onScrollToTable}
-        className="mt-5 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline"
-      >
-        View all metrics
-        <ArrowDown className="h-3 w-3" />
-      </button>
     </aside>
   );
 }
