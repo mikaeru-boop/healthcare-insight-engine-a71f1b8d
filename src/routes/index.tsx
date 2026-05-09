@@ -339,14 +339,12 @@ function AiPanel({
   generatedAt,
   activeSlug,
   onSelectSignal,
-  onScrollToTable,
 }: {
   signals: Signal[] | null;
   error: string | null;
   generatedAt: string | null;
   activeSlug: string;
   onSelectSignal: (slug: string) => void;
-  onScrollToTable: () => void;
 }) {
   const mockSignals = [
     {
