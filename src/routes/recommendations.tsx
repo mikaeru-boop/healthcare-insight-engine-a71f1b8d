@@ -7,6 +7,7 @@ import {
   activeSignals,
   inProgressSignals,
   resolvedSignals,
+  useSignals,
   type SignalRecord,
 } from "@/lib/signals-data";
 import { KPI_CATALOG } from "@/lib/kpi-catalog";
@@ -31,13 +32,14 @@ function RecommendationsPage() {
   const [tab, setTab] = useState<TabId>("active");
   const [openSignal, setOpenSignal] = useState<SignalRecord | null>(null);
 
+  const all = useSignals();
   const groups = useMemo(
     () => ({
-      active: activeSignals(),
-      "in-progress": inProgressSignals(),
-      resolved: resolvedSignals(),
+      active: activeSignals(all),
+      "in-progress": inProgressSignals(all),
+      resolved: resolvedSignals(all),
     }),
-    [],
+    [all],
   );
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode; count: number }[] = [
@@ -121,10 +123,11 @@ function SignalCard({ signal, onOpen }: { signal: SignalRecord; onOpen: () => vo
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {kpi?.label ?? signal.metricSlug}
           </span>
+          <StatusBadge status={signal.status} />
           {signal.status === "resolved" && signal.history.length > 0 && (
             <span className="text-[10px] text-muted-foreground">
               · {signal.history.length} prior instance{signal.history.length === 1 ? "" : "s"} on record
@@ -134,7 +137,7 @@ function SignalCard({ signal, onOpen }: { signal: SignalRecord; onOpen: () => vo
         <p className="mt-1 text-sm font-medium text-foreground">{signal.signal}</p>
         <p className="mt-1.5 text-xs text-muted-foreground">{signal.impact}</p>
 
-        {signal.status === "in-progress" && lastAction && (
+        {(signal.status === "in-progress" || signal.status === "escalated") && lastAction && (
           <p className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Clock className="h-3 w-3" />
             Last action <span className="text-foreground">{lastAction.timestamp}</span> ·{" "}
@@ -183,5 +186,21 @@ function EmptyState({ tab }: { tab: TabId }) {
       </div>
       <p className="max-w-sm text-sm text-muted-foreground">{text}</p>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: SignalRecord["status"] }) {
+  const map: Record<SignalRecord["status"], string> = {
+    active: "bg-red-500/15 text-red-500 border-red-500/30",
+    "in-progress": "bg-amber-500/15 text-amber-600 border-amber-500/30",
+    escalated: "bg-orange-500/15 text-orange-600 border-orange-500/30",
+    resolved: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
+  };
+  return (
+    <span
+      className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${map[status]}`}
+    >
+      {status.replace("-", " ")}
+    </span>
   );
 }

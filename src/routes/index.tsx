@@ -24,6 +24,7 @@ import {
 import {
   activeSignals,
   inProgressSignals,
+  useSignals,
   type SignalRecord,
 } from "@/lib/signals-data";
 import { TopNav } from "@/components/top-nav";
@@ -49,13 +50,14 @@ function Dashboard() {
   const profile = useUserProfile();
   const hydrated = useHydrated();
 
+  const all = useSignals();
   // Visible signals on dashboard = active + in-progress, sorted by priority.
   const visibleSignals = useMemo(
     () =>
-      [...activeSignals(), ...inProgressSignals()].sort(
+      [...activeSignals(all), ...inProgressSignals(all)].sort(
         (a, b) => a.priority - b.priority,
       ),
-    [],
+    [all],
   );
 
   const [activeSlug, setActiveSlug] = useState<string>(
